@@ -74,3 +74,10 @@
   - 結果記録（変更ファイル/コマンド/結果）を実差分と一致させる
   - `plannedAmount` の空/非数値入力時の扱いをコードと結果記録で一意化する
 - 再開条件を満たしたため、`STOP_REQUIRED.md` を解除して実行再開する
+
+## 2026-05-11 Manager更新（STOP再発行）
+
+- 必読ファイル再確認時点で `task-004-tsconfig-build-compat` は `needs_rework` かつ `Retry=2` であり、AGENTS.md の STOP条件「同じTaskで2回失敗」に該当。
+- 現在のHuman Decisionは再開済み履歴として残すが、現状態に対しては再度 `docs/management/STOP_REQUIRED.md` を発行し、実装を停止。
+- `task-004` を `blocked` に更新し、Feature `feature-002-diagnosis-logic` も `blocked` へ更新。
+- 次アクションは人間判断待ち（Task分割要否、`plannedAmount` 入力仕様、差分境界運用の再確定）。
