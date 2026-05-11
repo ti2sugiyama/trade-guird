@@ -10,7 +10,20 @@ if [ -f docs/management/STOP_REQUIRED.md ]; then
 fi
 
 echo "=== Manager: select next task ==="
-codex exec "$(cat prompts/manager.md)"
+codex exec "$(cat prompts/manager.md)
+
+# 追加指示
+
+このフェーズはTask選定専用です。更新してよいファイルは以下のみに限定してください。
+- docs/management/current-task.md
+- （必要時のみ）docs/management/STOP_REQUIRED.md
+
+禁止:
+- docs/management/task-status.md の更新
+- docs/management/feature-status.md の更新
+- docs/management/decision-log.md の更新
+- docs/management/review.md の更新
+"
 
 if [ -f docs/management/STOP_REQUIRED.md ]; then
   echo "Manager requested human confirmation."

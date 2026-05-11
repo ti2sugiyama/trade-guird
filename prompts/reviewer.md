@@ -52,6 +52,12 @@
 - NEEDS_REWORK
 - STOP_REQUIRED
 
+# STOP_REQUIREDファイル作成ルール
+
+- `docs/management/STOP_REQUIRED.md` は、`review.md` の判定を `STOP_REQUIRED` にしたときのみ作成する。
+- 判定が `OK` または `NEEDS_REWORK` のときは、`docs/management/STOP_REQUIRED.md` を作成しない。
+- `Retry` 回数のみを理由に `STOP_REQUIRED` 判定しない（`Retry` は注意情報）。
+
 # review.md 形式
 
 ```md

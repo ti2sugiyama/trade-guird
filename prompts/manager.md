@@ -51,6 +51,13 @@ Feature Queue / Task Queue / STOP判定を管理します。
 6. 未解決のblockerがあれば `docs/management/blockers.md` を更新する
 7. 人間確認が必要なら `docs/management/STOP_REQUIRED.md` を作る
 
+# STOP_REQUIRED作成ルール
+
+- `docs/management/STOP_REQUIRED.md` を作成してよいのは次の場合のみ。
+  - `docs/management/review.md` の判定が `STOP_REQUIRED` の場合
+  - 仕様矛盾、API契約変更、DB設計変更、認証/課金影響、依存追加必須、原因不明のテスト失敗など、AGENTS.md の停止条件に明確に該当する場合
+- `Retry` 回数のみを理由に `STOP_REQUIRED.md` を作成しない（`Retry` は注意情報）。
+
 # current-task.md の形式
 
 以下の形式で書いてください。
