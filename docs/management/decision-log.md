@@ -147,3 +147,18 @@
 - 許可2: `docs/results/task-004-tsconfig-build-compat-worker-result.md` は最終 `git diff` と1ファイル単位で一致させる運用を確定。
 - 許可3: `tsconfig.tsbuildinfo` は差分に含めない運用とし、追跡対象外として扱う方針を確定。
 - 再開条件を満たしたため、`docs/management/STOP_REQUIRED.md` を解消して実行再開する。
+
+## 2026-05-11 Human Decision (Approve global diff policy and close STOP_REQUIRED)
+
+- 判断: STOP_REQUIREDの3論点を承認し、運用を確定する。
+- 承認1: `task-004` を含む実装Taskの最終差分許可範囲は `src/**` / `docs/results/**` / `tsconfig.json` とする。
+- 承認2: `tsconfig.tsbuildinfo` は追跡対象外・差分除外運用とする。
+- 承認3: 結果記録ファイルは最終 `git diff` と1ファイル単位で一致必須とする。
+- 上記承認により `STOP_REQUIRED.md` を解消し、次のTask選定へ進む。
+
+## 2026-05-11 Manager更新（review OK反映・次Task切替）
+
+- 直近 `docs/management/review.md`（判定: OK）と `docs/results/task-004-tsconfig-build-compat-worker-result.md` を照合し、`task-004-tsconfig-build-compat` を `done` と判定。
+- `task-004` 完了により依存待ちだった `task-002-domain-types` を再評価し、結果記録の実装内容を確認のうえ `done` へ更新。
+- `needs_rework` / `blocked` の未解決Taskが解消されたため、次実行Taskを `task-003-diagnosis-rules` に切り替え。
+- `docs/management/STOP_REQUIRED.md` は不在で、AGENTS.md の停止条件にも新規該当なし。
