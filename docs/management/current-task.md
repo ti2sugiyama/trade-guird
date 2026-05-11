@@ -10,41 +10,44 @@ feature-003-market-data-adapter
 
 ## 目的
 
-Task 005 の実行可否を確定するため、実装差分許可範囲の矛盾を人間確認で解消し、実装対象を確定する。
+`NEEDS_REWORK` 指摘を解消し、Task完了判定対象差分を許可範囲へ収束させたうえで結果記録との整合を取る。
 
 ## 対象スコープ
 
-- docs/management/current-task.md
-- docs/tasks/task-005-market-data-client.md
+- src/collect_yahoo_prices_csv.py
+- docs/results/task-005-market-data-client-worker-result.md
 
 ## 実装内容
 
-- `docs/tasks/task-005-market-data-client.md` の対象を `scripts/**` から `src/**` に修正する。
-- 実装対象パスを `src/collect_yahoo_prices_csv.py` に統一する。
-- 修正後、Worker は共通許可範囲内で Task 005 実装を再開する。
+- `docs/management/**` を除く差分から、`task-005` 完了判定に不要な差分（`scripts/**`、`prompts/**`、`docs/specs/**`、`AGENTS.md`、`docs/results/task-none-waiting-worker-result.md` など）を除外し、Task差分を `src/**` と `docs/results/**` のみに収束させる。
+- 実差分を基準に `docs/results/task-005-market-data-client-worker-result.md` の「変更ファイル」「結果」を更新し、記録と実態を一致させる。
+- CLIエントリ要件として `python3 src/collect_yahoo_prices_csv.py --help` 成功状態を維持する。
 
 ## 受け入れ条件
 
-- 仕様矛盾に対する人間の明示判断が記録されていること。
-- Task 005 の実装対象パスが `src/**` に確定していること。
-- `docs/tasks/task-005-market-data-client.md` の対象ファイルとテストコマンドが `src/**` に整合していること。
+- `docs/management/**` を除くTask完了判定対象差分が `src/**` と `docs/results/**` のみに収まる。
+- `docs/management/**` を除く差分に `task-005` 目的外ファイル（`scripts/**`、`prompts/**`、`docs/specs/**`、`AGENTS.md`、`docs/results/task-none-waiting-worker-result.md`）が残っていない。
+- `docs/results/task-005-market-data-client-worker-result.md` の記録内容（変更ファイル・結果）が実差分と一致する。
+- `python3 src/collect_yahoo_prices_csv.py --help` が成功する。
+- 依存パッケージを追加しない。
 
 ## 実行するテスト
 
-- なし（管理判断のみ）
+- python3 src/collect_yahoo_prices_csv.py --help
 
 ## 禁止事項
 
-- コード実装の開始
-- 依存パッケージ追加
-- 仕様の独断変更
+- 実装差分として `src/**` と `docs/results/**`（および管理運用の `docs/management/**`）以外を変更しない。
+- 依存パッケージ追加をしない。
+- UI実装・仕様追加・DB/API/Auth/Paymentの設計変更をしない。
 
 ## 完了後の記録先
 
-- docs/management/current-task.md
+- docs/results/task-005-market-data-client-worker-result.md
 
 ## 判断メモ（1-3行）
 
-- 2026-05-11: task-005 は Task定義の対象ファイルと共通許可範囲が衝突しているため、実装開始前に停止判定へ切り替える。
-- 2026-05-11: PM承認により、task-005 の実装対象は `scripts/**` ではなく `src/**` に統一して進行する。
-- 参照specs: なし / 矛盾: 解消（対象を `src/**` に修正）
+- 2026-05-11: `review.md` 判定 `NEEDS_REWORK` と `docs/results/`・実差分確認の結果、`task-005` は未完了のため最優先で再実行する。
+- 2026-05-11: PM承認により、`task-005` の実装先は `scripts/**` ではなく `src/**`（`src/collect_yahoo_prices_csv.py`）で確定。
+- 2026-05-11: STOP条件（仕様矛盾、API/DB/Auth/Payment影響、依存追加必須、原因不明テスト失敗等）には該当せず、`STOP_REQUIRED.md` は作成しない。
+- 参照specs: なし / 矛盾: なし
