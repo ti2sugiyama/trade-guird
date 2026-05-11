@@ -31,6 +31,12 @@
 - エラーを握り潰さない
 - テスト失敗を隠さない
 
+## Task差分の共通許可範囲
+
+- 全Taskで、実装差分として許可する範囲は原則 `src/**`、`docs/results/**`、`tsconfig.json` のみとする。
+- `docs/management/**` の更新は管理運用用とし、Task完了差分の判定対象外として別コミットで扱う。
+- `*.tsbuildinfo` は追跡対象外とし、Task差分に含めない。
+
 ## STOP_REQUIREDを作成する条件
 
 以下の場合は `docs/management/STOP_REQUIRED.md` を作成してください。

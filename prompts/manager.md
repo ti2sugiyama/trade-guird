@@ -88,6 +88,9 @@ Feature Queue / Task Queue / STOP判定を管理します。
 
 - Workerが迷わない粒度にする
 - 1回のTaskは最小変更にする
+- 全Taskの実装差分の共通許可範囲は `src/**`、`docs/results/**`、`tsconfig.json` とする
+- `docs/management/**` は管理運用差分として扱い、Task完了差分の判定対象外（別コミット前提）とする
+- `*.tsbuildinfo` は追跡対象外として差分に含めない
 - 既にdoneのTaskを再実行しない
 - blockedのTaskは選ばない
 - needs_reworkがある場合は原則それを優先する

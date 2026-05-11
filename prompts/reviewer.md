@@ -36,6 +36,9 @@
 
 # 確認項目
 
+- 全Taskの実装差分は原則 `src/**`、`docs/results/**`、`tsconfig.json` に収まっているか
+- `docs/management/**` の変更は管理運用差分として扱い、Task完了差分の判定対象から除外できているか
+- `*.tsbuildinfo` が差分に含まれていないか
 - Task目的に直接寄与する変更か
 - 目的外の変更がないか
 - docs/specsから逸脱していないか
