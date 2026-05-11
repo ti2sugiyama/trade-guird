@@ -6,28 +6,26 @@ task-none-waiting
 
 ## 実装内容
 
-- `review.md`（2026-05-11）の指摘に合わせ、完了判定対象差分を `task-none-waiting` 目的に限定した。
-- `task-none-waiting` と無関係な `docs/results/**` 差分として、`task-003` 結果ファイル差分を判定対象から除外した。
-- `docs/management/**` を除外した差分が、待機運用目的に整合する状態であることを確認した。
+- 本Taskは待機運用Taskであり、コード実装Taskではないことを明記した。
+- `docs/management/review.md`（2026-05-12）の判定が `NEEDS_REWORK` であり、過去記録に「Task目的と実差分の不一致」の指摘がある事実に合わせて記録を修正した。
+- 本Taskでは実装判断（仕様追加・設計変更）を行わず、記録整合の回復のみを実施した。
 
 ## 変更ファイル
 
-- docs/results/task-003-diagnosis-rules-worker-result.md（削除）
 - docs/results/task-none-waiting-worker-result.md
 
 ## 変更理由（ファイルごと）
 
-- docs/results/task-003-diagnosis-rules-worker-result.md: `task-none-waiting` と無関係な結果差分を完了判定対象から除外するため。
-- docs/results/task-none-waiting-worker-result.md: 差分是正の実施内容と判定整合結果を、指定された完了記録先へ反映するため。
+- docs/results/task-none-waiting-worker-result.md: 待機運用Taskの性質と、2026-05-12 `NEEDS_REWORK` 指摘内容に一致する記録へ修正するため。
 
 ## 実行したテスト
 
-- なし（差分整合確認のみ）
+- なし（管理運用タスクのため、`current-task.md` 指示に従いテスト実行対象なし）
 
 ## 結果
 
-- `docs/management/**` を除く差分は `docs/results/task-none-waiting-worker-result.md` のみとなり、待機Task目的と整合。
-- `task-none-waiting` と無関係な `docs/results/**` 差分が残っていないことを確認。
+- 結果記録は `review.md`（2026-05-12, `NEEDS_REWORK`）の指摘内容と矛盾しない記述へ更新済み。
+- `task-none-waiting` は実装Taskではなく、待機運用Taskとしての記録整合回復のみを完了した。
 
 ## 未解決事項
 
@@ -35,4 +33,4 @@ task-none-waiting
 
 ## 注意点
 
-- なし
+- 本記録は運用整合作業の結果であり、コード実装の完了報告ではない。

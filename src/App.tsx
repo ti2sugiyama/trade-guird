@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import { evaluateDiagnosis } from './domain/diagnosis';
-import type { DiagnosisInput, DiagnosisResult } from './domain/types';
+import { embeddedMarketCsv } from './data/embeddedMarketCsv';
+import { buildDiagnosisInputFromMarketCsv, evaluateDiagnosis } from './domain/diagnosis';
+import type { DiagnosisInput, DiagnosisInputSource, DiagnosisResult } from './domain/types';
 import { loadHistory, saveHistoryItem } from './storage/historyStorage';
 
 type Screen = 'home' | 'diagnosis' | 'result' | 'history';
@@ -20,15 +21,35 @@ const initialInput: DiagnosisInput = {
 export default function App() {
   const [screen, setScreen] = useState<Screen>('home');
   const [input, setInput] = useState<DiagnosisInput>(initialInput);
+  const [inputSource, setInputSource] = useState<DiagnosisInputSource>('manual');
   const [result, setResult] = useState<DiagnosisResult | null>(null);
+  const [diagnosisErrorMessage, setDiagnosisErrorMessage] = useState<string | null>(null);
   const [historyVersion, setHistoryVersion] = useState(0);
 
   const history = useMemo(() => loadHistory(), [historyVersion]);
 
   function runDiagnosis() {
-    const nextResult = evaluateDiagnosis(input);
+    setDiagnosisErrorMessage(null);
+
+    let diagnosisInput = input;
+    if (inputSource === 'market-csv') {
+      try {
+        diagnosisInput = buildDiagnosisInputFromMarketCsv({
+          csvText: embeddedMarketCsv,
+          tickerName: input.tickerName,
+          plannedShares: input.plannedShares,
+          memo: input.memo,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : '実データ診断で不明なエラーが発生しました。';
+        setDiagnosisErrorMessage(message);
+        return;
+      }
+    }
+
+    const nextResult = evaluateDiagnosis(diagnosisInput);
     setResult(nextResult);
-    saveHistoryItem({ input, result: nextResult, createdAt: new Date().toISOString() });
+    saveHistoryItem({ input: diagnosisInput, result: nextResult, createdAt: new Date().toISOString() });
     setHistoryVersion((version) => version + 1);
     setScreen('result');
   }
@@ -62,8 +83,26 @@ export default function App() {
       {screen === 'diagnosis' && (
         <section className="card">
           <h2>診断入力</h2>
+          <div className="checks">
+            <label className="check">
+              <input
+                type="radio"
+                checked={inputSource === 'manual'}
+                onChange={() => setInputSource('manual')}
+              />
+              手入力で診断する
+            </label>
+            <label className="check">
+              <input
+                type="radio"
+                checked={inputSource === 'market-csv'}
+                onChange={() => setInputSource('market-csv')}
+              />
+              実データを使用する（CSV）
+            </label>
+          </div>
           <label>
-            銘柄名
+            銘柄名{inputSource === 'market-csv' ? '（例: 8035.T）' : ''}
             <input
               value={input.tickerName}
               onChange={(event) => setInput({ ...input, tickerName: event.target.value })}
@@ -122,6 +161,7 @@ export default function App() {
           <button className="primary" onClick={runDiagnosis}>
             診断する
           </button>
+          {diagnosisErrorMessage && <p>{diagnosisErrorMessage}</p>}
         </section>
       )}
 

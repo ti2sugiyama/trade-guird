@@ -257,3 +257,13 @@
 - Human要求「少しでも早く株価情報をためたいので、外部API連携をありにしたい」を承認方針として反映。
 - `docs/specs/product-brief.md` と `docs/specs/mvp-scope.md` を更新し、外部株価API連携をMVPの許可範囲に変更。
 - `task-005` をスタブ方針からAPI実装方針へ切り替え、`task-005-market-data-client` として進行する。
+
+## 2026-05-12 Manager更新（review NEEDS_REWORK反映・task-006再作業継続）
+
+- 直近 `docs/management/review.md`（判定: `NEEDS_REWORK`）と `docs/results/task-006-real-market-diagnosis-adapter-worker-result.md` を確認。
+- `task-006-real-market-diagnosis-adapter` は build成功と機能要件（実データ診断導線・欠損時明示エラー）は確認できる一方、未追跡 `data/**` 依存と許可範囲外差分残存のため `needs_rework` 継続と判定。
+- `task-status.md` の `task-006` を `needs_rework` のまま更新（Retryは注意情報として `4`）。
+- `current-task.md` を `task-006` 再作業指示に更新し、未追跡ローカルファイル依存を解消して完了判定差分を `src/**`、`docs/results/**`、`tsconfig.json` に収束することを明記。
+- `STOP_REQUIRED` 条件（reviewがSTOP_REQUIRED、または仕様矛盾/API契約変更/DB変更/依存追加必須/原因不明テスト失敗等）には該当しないため、`docs/management/STOP_REQUIRED.md` は作成しない。
+
+- 2026-05-12: `review.md` 最新判定 `NEEDS_REWORK`（task-none-waiting）を反映。`task-none-waiting` を `needs_rework` に更新し、次実行Taskとして再設定。STOP_REQUIRED非該当を確認。

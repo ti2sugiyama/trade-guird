@@ -12,6 +12,8 @@ export type DiagnosisInput = {
   memo: string;
 };
 
+export type DiagnosisInputSource = 'manual' | 'market-csv';
+
 export type WarningItem = {
   code: string;
   message: string;
