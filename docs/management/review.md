@@ -6,10 +6,10 @@ OK
 
 ## 指摘事項
 
-- `npm run build` はレビュー時点（2026-05-11）で成功（`tsc -b && vite build` exit code 0）。
-- Task完了判定対象（`docs/management/**` を除外）として見た実装差分は `docs/results/task-004-tsconfig-build-compat-worker-result.md` のみで、許可範囲（`src/**` / `docs/results/**` / `tsconfig.json`）内です。
-- `*.tsbuildinfo` は追跡差分に含まれていません。
-- 結果記録ファイルの内容（コード修正なし、ビルド成功、変更ファイルが結果記録のみ）は、最終 `git diff` のTask判定対象差分と整合しています。
+- `docs/management/**` を除外したTask完了判定対象差分は [task-none-waiting-worker-result.md](/Users/taijisugiyama/dev2/trade-guird/docs/results/task-none-waiting-worker-result.md) のみで、`task-none-waiting` の目的に整合している。
+- 目的外とされていた `docs/results/task-003-diagnosis-rules-worker-result.md` の差分混在は解消されている（ファイル自体も作業ツリー上に存在しない）。
+- `*.tsbuildinfo` の追跡差分混入は確認されない。
+- 本Taskは「差分整合確認のみ」であり、追加テスト不要という `current-task.md` の方針と実施内容は一致している。
 
 ## 修正が必要な場合の理由
 
@@ -21,4 +21,5 @@ OK
 
 ## 次にManagerが見るべき点
 
-- `docs/management/**` の更新は運用差分として、Task完了差分コミットと分離されているかを最終確認すること。
+- `docs/management/**` を除外した最終差分が引き続き [task-none-waiting-worker-result.md](/Users/taijisugiyama/dev2/trade-guird/docs/results/task-none-waiting-worker-result.md) のみであること。
+- 管理運用差分（`docs/management/**`）をTask完了差分と分離して扱えていること。

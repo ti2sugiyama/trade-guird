@@ -162,3 +162,70 @@
 - `task-004` 完了により依存待ちだった `task-002-domain-types` を再評価し、結果記録の実装内容を確認のうえ `done` へ更新。
 - `needs_rework` / `blocked` の未解決Taskが解消されたため、次実行Taskを `task-003-diagnosis-rules` に切り替え。
 - `docs/management/STOP_REQUIRED.md` は不在で、AGENTS.md の停止条件にも新規該当なし。
+
+## 2026-05-11 Manager更新（task-003完了反映・全Task完了）
+
+- 直近 `docs/management/review.md`（判定: OK）と `docs/results/task-003-diagnosis-rules-worker-result.md` を照合し、`task-003-diagnosis-rules` を `done` と判定。
+- これにより `feature-002-diagnosis-logic` 配下のTask（`task-004` / `task-002` / `task-003`）はすべて `done` となったため、Feature状態を `done` に更新。
+- 未解決blockerはなく、`docs/management/STOP_REQUIRED.md` も不在のため停止条件には該当しない。
+- 次に実行すべき `ready` な未完了Taskが存在しないため、`current-task.md` は待機状態（`Task ID: none`）へ更新。
+
+## 2026-05-11 Manager更新（直近review/results再確認）
+
+- `docs/management/review.md`（判定: OK）と `docs/results/task-003-diagnosis-rules-worker-result.md` を再確認し、`task-003-diagnosis-rules` の `done` 判定を維持。
+- `task-status.md` / `feature-status.md` を整合更新し、未完了Taskなし・全Feature完了を再確認。
+- `docs/management/STOP_REQUIRED.md` は不在、かつ新規停止条件該当なし。
+- 次に実行すべき `ready` なTaskがないため、`current-task.md` は `Task ID: none` の待機状態を維持。
+
+## 2026-05-11 Manager更新（review NEEDS_REWORK反映・待機Task是正）
+
+- 直近 `docs/management/review.md`（判定: NEEDS_REWORK）を確認し、指摘が「待機Task差分への目的外結果記録混在」であることを確認。
+- `docs/results/task-003-diagnosis-rules-worker-result.md` と `docs/results/task-none-waiting-worker-result.md` を確認し、実装仕様不整合ではなく差分運用上の是正タスクと判断。
+- `task-status.md` に `task-none-waiting` を `needs_rework` として追加（Retryは注意情報として `1`）。
+- `current-task.md` を `task-none-waiting` の是正指示へ更新し、待機Task差分を単一目的に整理するタスクを再オープン。
+- `STOP_REQUIRED` 判定には該当しないため `docs/management/STOP_REQUIRED.md` は作成しない。
+
+## 2026-05-11 Manager更新（task-none-waiting完了反映・待機継続）
+
+- 直近 `docs/management/review.md`（判定: OK）と `docs/results/task-none-waiting-worker-result.md` を照合し、`task-none-waiting` を `done` に更新。
+- `needs_rework` は解消済みで、未完了の `ready` Task は存在しないことを確認。
+- `docs/management/STOP_REQUIRED.md` は不在で、AGENTS.md の停止条件に新規該当なし。
+- 次Task投入待ちのため、`current-task.md` は `Task ID: none` の待機状態に更新。
+
+## 2026-05-11 Manager判断（証跡整合の再判定）
+
+- 参照: `docs/management/review.md`（判定OK）および `docs/results/` 実体。
+- 判定: `task-003-diagnosis-rules` は実装完了扱いのままにせず、証跡欠落により `needs_rework` へ遷移。
+- 理由: `docs/management/task-status.md` が参照する `docs/results/task-003-diagnosis-rules-worker-result.md` が存在せず、完了判定の裏取りができないため。
+- 対応: `current-task.md` を `task-003-diagnosis-rules` の再検証タスクへ更新。Feature 002 を `in_progress` に戻した。
+- STOP判定: なし（仕様矛盾・依存追加必須・原因不明テスト失敗等の停止条件には非該当）。
+
+## 2026-05-11 Manager更新（review NEEDS_REWORK再反映）
+
+- 直近 `docs/management/review.md`（判定: `NEEDS_REWORK`）と `docs/results/` を確認。
+- `task-003-diagnosis-rules` の結果ファイル存在・build成功記録自体は確認できるが、完了判定対象差分に `docs/results/task-none-waiting-worker-result.md` が混在しているため `needs_rework` 継続と判定。
+- `needs_rework` 優先ルールに従い、次実行Taskは `task-003-diagnosis-rules` を継続選定。
+- `Retry` は注意情報として `2` に更新。
+- `STOP_REQUIRED.md` は不在で、停止条件（仕様矛盾/API契約変更/依存追加必須/原因不明テスト失敗等）にも非該当のため作成しない。
+
+## 2026-05-11 Manager更新（review OK反映・Task/Feature完了確定）
+
+- 直近 `docs/management/review.md`（判定: `OK`）と `docs/results/task-003-diagnosis-rules-worker-result.md` を再確認し、`task-003-diagnosis-rules` を `done` と判定。
+- `task-status.md` を更新し、`task-003-diagnosis-rules` を `needs_rework` から `done` へ遷移。
+- `feature-status.md` を更新し、`feature-002-diagnosis-logic` を `done` に確定。
+- 実行可能な未完了Taskが存在しないため、`current-task.md` を `task-none-waiting`（運用待機）へ更新。
+- `STOP_REQUIRED.md` は不在で、AGENTS.md 停止条件への新規該当なし。
+
+## 2026-05-11 Manager更新（review NEEDS_REWORK反映・待機Task再オープン）
+
+- 直近 `docs/management/review.md`（判定: `NEEDS_REWORK`）と `docs/results/` を照合し、指摘対象が `task-none-waiting` の差分整合であることを確認。
+- `task-status.md` の `task-none-waiting` を `done` から `needs_rework` へ更新（`Retry=2`、Retryは注意情報）。
+- 次実行Taskを `task-none-waiting` に再設定し、`current-task.md` を「待機Task目的に一致した差分への是正」指示へ更新。
+- `STOP_REQUIRED` 条件（review判定がSTOP_REQUIRED、または仕様矛盾/依存追加必須等）には該当しないため、`docs/management/STOP_REQUIRED.md` は作成しない。
+
+## 2026-05-11 Manager更新（review OK反映・待機運用へ復帰）
+
+- 直近 `docs/management/review.md`（判定: `OK`）と `docs/results/task-none-waiting-worker-result.md` を確認し、`task-none-waiting` を `needs_rework` から `done` へ更新。
+- `task-status.md` / `feature-status.md` / `blockers.md` を整合更新し、未解決blockerなしを明記。
+- 実行可能な未完了Taskは存在しないため、`current-task.md` は `task-none-waiting` を維持（管理運用待機）。
+- `STOP_REQUIRED.md` は未作成のまま（review判定STOP_REQUIREDではなく、AGENTS.md停止条件への新規該当なし）。
