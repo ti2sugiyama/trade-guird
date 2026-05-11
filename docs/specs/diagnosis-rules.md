@@ -3,7 +3,7 @@
 ## 入力項目
 
 - tickerName: 銘柄名
-- plannedAmount: 購入予定額
+- plannedShares: 購入予定株数
 - isSurging: 急騰中か
 - isFalling: 下落中か
 - isAveragingDown: ナンピン目的か
@@ -11,6 +11,9 @@
 - influencedByBoard: 掲示板に影響されたか
 - revengeTrade: 損を取り返したい気持ちが強いか
 - memo: メモ
+
+補足:
+- `plannedAmount`（購入予定額）が必要な場合は、購入決定時の `株価 × plannedShares` を派生値として扱う。
 
 ## 判定
 

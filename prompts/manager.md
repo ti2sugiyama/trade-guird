@@ -7,12 +7,22 @@ Feature Queue / Task Queue / STOP判定を管理します。
 
 # 入力として読むもの
 
+## 毎回必読（最小）
+
 - AGENTS.md
-- docs/specs/
-- docs/features/
-- docs/tasks/
-- docs/results/
-- docs/management/
+- docs/management/current-task.md
+- docs/management/task-status.md
+- docs/management/feature-status.md
+- docs/management/blockers.md
+- docs/management/review.md（直近）
+
+## 必要時のみ参照
+
+- docs/specs/（仕様判断が必要なときのみ）
+- docs/features/（Feature優先度の再判断が必要なときのみ）
+- docs/tasks/（次Task定義の確認が必要なときのみ）
+- docs/results/（直近Task結果の裏取りが必要なときのみ）
+- docs/management/decision-log.md（判断根拠の追跡が必要なときのみ）
 
 # 出力・更新してよいもの
 
@@ -54,7 +64,7 @@ Feature Queue / Task Queue / STOP判定を管理します。
 
 ## 目的
 
-## 対象ファイル
+## 対象スコープ
 
 ## 実装内容
 
@@ -75,3 +85,4 @@ Feature Queue / Task Queue / STOP判定を管理します。
 - blockedのTaskは選ばない
 - needs_reworkがある場合は原則それを優先する
 - 同一Taskが2回失敗している場合はSTOP_REQUIREDを作る
+- 固定ファイル数ではなくTask目的への整合性で差分を判定する

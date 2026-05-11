@@ -2,7 +2,7 @@ export type DangerLevel = 'low' | 'medium' | 'high';
 
 export type DiagnosisInput = {
   tickerName: string;
-  plannedAmount: string;
+  plannedShares: number;
   isSurging: boolean;
   isFalling: boolean;
   isAveragingDown: boolean;

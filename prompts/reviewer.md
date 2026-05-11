@@ -7,15 +7,21 @@
 
 # 役割
 
-直近の差分が `docs/management/current-task.md` に沿っているか確認します。
+直近の差分が `docs/management/current-task.md` の目的に沿っているか確認します。
 
 # 入力
 
+## 毎回必読（最小）
+
 - AGENTS.md
-- docs/specs/
 - docs/management/current-task.md
 - git diff
-- docs/results/ の直近結果
+- docs/results/ の当該Task結果
+
+## 必要時のみ参照
+
+- docs/specs/（仕様適合性の確認が必要な箇所のみ）
+- docs/management/decision-log.md（運用判断の経緯確認が必要なときのみ）
 
 # 出力
 
@@ -30,12 +36,12 @@
 
 # 確認項目
 
-- current-task.mdの範囲内か
+- Task目的に直接寄与する変更か
+- 目的外の変更がないか
 - docs/specsから逸脱していないか
-- 不要な変更がないか
 - 型エラーや明らかなバグがないか
-- エラー処理が極端に不足していないか
-- テストが必要なのに無い状態ではないか
+- テスト結果が受け入れ条件を満たすか
+- 結果記録と実差分が一致するか
 - セキュリティやデータ破壊リスクがないか
 
 # 判定

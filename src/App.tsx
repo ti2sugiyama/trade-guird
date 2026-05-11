@@ -7,7 +7,7 @@ type Screen = 'home' | 'diagnosis' | 'result' | 'history';
 
 const initialInput: DiagnosisInput = {
   tickerName: '',
-  plannedAmount: '',
+  plannedShares: 0,
   isSurging: false,
   isFalling: false,
   isAveragingDown: false,
@@ -71,11 +71,20 @@ export default function App() {
             />
           </label>
           <label>
-            購入予定額
+            購入予定株数
             <input
-              value={input.plannedAmount}
-              onChange={(event) => setInput({ ...input, plannedAmount: event.target.value })}
-              placeholder="例：100000"
+              type="number"
+              min={0}
+              step={1}
+              value={input.plannedShares === 0 ? '' : input.plannedShares}
+              onChange={(event) =>
+                setInput({
+                  ...input,
+                  plannedShares:
+                    event.target.value === '' ? 0 : Math.max(0, Math.trunc(Number(event.target.value))),
+                })
+              }
+              placeholder="例：100"
             />
           </label>
 
