@@ -1,9 +1,54 @@
 # Current Task
 
-まだManagerがTaskを選定していません。
+## Task ID
 
-まず以下を実行してください。
+task-004-tsconfig-build-compat
 
-```bash
-./scripts/run-one-task.sh
-```
+## Feature
+
+feature-002-diagnosis-logic
+
+## 目的
+
+`task-004-tsconfig-build-compat` の再修正を行い、対象ファイル内の最小差分で `npm run build` 成功・結果記録一致・入力値変換方針の明確化を満たす。
+
+## 対象ファイル
+
+- tsconfig.json
+- src/App.tsx
+- src/main.tsx
+- docs/results/task-004-tsconfig-build-compat-worker-result.md
+
+## 実装内容
+
+- `npm run build` を成功させるための最小差分のみを適用する。
+- 変更ファイルは対象ファイルに限定し、Task外差分を完了差分へ混在させない。
+- `src/App.tsx` の `plannedAmount` 入力で、非数値/空入力時の扱いを実装で一意にし、結果ファイルへ明記する。
+- 結果ファイルの「変更ファイル」「実行コマンド」「結果」を実差分と一致させる。
+
+## 受け入れ条件
+
+- `npm run build` が成功する。
+- 依存パッケージ追加なし。
+- 変更ファイルが対象ファイル内に限定されている。
+- `docs/results/task-004-tsconfig-build-compat-worker-result.md` の記載が実差分と一致している。
+- `plannedAmount` 入力の空/非数値時の挙動がコードと結果記録で矛盾しない。
+
+## 実行するテスト
+
+- npm run build
+
+## 禁止事項
+
+- 仕様追加禁止
+- UI文言の大幅変更禁止
+- dependency追加禁止
+- 目的外のリファクタ禁止
+- 対象外ファイル変更禁止
+
+## 完了後の記録先
+
+- docs/results/task-004-tsconfig-build-compat-worker-result.md
+- docs/management/task-status.md
+- docs/management/feature-status.md
+- docs/management/decision-log.md
