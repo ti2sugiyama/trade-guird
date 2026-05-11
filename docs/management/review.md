@@ -6,20 +6,22 @@ OK
 
 ## 指摘事項
 
-- `docs/management/**` を除外したTask完了判定対象差分は [task-none-waiting-worker-result.md](/Users/taijisugiyama/dev2/trade-guird/docs/results/task-none-waiting-worker-result.md) のみで、`task-none-waiting` の目的に整合している。
-- 目的外とされていた `docs/results/task-003-diagnosis-rules-worker-result.md` の差分混在は解消されている（ファイル自体も作業ツリー上に存在しない）。
-- `*.tsbuildinfo` の追跡差分混入は確認されない。
-- 本Taskは「差分整合確認のみ」であり、追加テスト不要という `current-task.md` の方針と実施内容は一致している。
+- `docs/management/**` を除く差分は `src/collect_yahoo_prices_csv.py` と `docs/results/task-005-market-data-client-worker-result.md` のみで、Task許可範囲に収まっていることを確認。
+- `*.tsbuildinfo` は差分に含まれていないことを確認。
+- `python3 src/collect_yahoo_prices_csv.py --help` は終了コード0で成功することを確認。
+- 収集実行（ネットワーク制限下）で `prices_*.csv` / `failed_symbols_*.txt` / `run_report_*.json` の3種出力が生成されることを確認。
+- `docs/results/task-005-market-data-client-worker-result.md` の記載内容（変更ファイル・テスト・結果）は実差分および実行結果と整合。
+- 仕様逸脱、依存追加、セキュリティ上の明白な懸念、データ破壊リスクは本差分では確認されない。
 
 ## 修正が必要な場合の理由
 
-- なし。
+- 該当なし。
 
 ## STOP_REQUIREDが必要な場合の理由
 
-- なし。
+- 該当なし。
 
 ## 次にManagerが見るべき点
 
-- `docs/management/**` を除外した最終差分が引き続き [task-none-waiting-worker-result.md](/Users/taijisugiyama/dev2/trade-guird/docs/results/task-none-waiting-worker-result.md) のみであること。
-- 管理運用差分（`docs/management/**`）をTask完了差分と分離して扱えていること。
+- `docs/management/**` の運用差分を Task完了差分と分離して扱うこと。
+- Task 005 の完了判定時は、コミット対象が `src/collect_yahoo_prices_csv.py` と `docs/results/task-005-market-data-client-worker-result.md` に限定されていることを最終確認すること。

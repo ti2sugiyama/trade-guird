@@ -1,4 +1,7 @@
-# Decision Log
+# Decision Log (Archived)
+
+このファイルは履歴保管専用です。新規更新しません。  
+新しい運用判断は `docs/management/current-task.md` の「判断メモ（1-3行）」へ記録します。
 
 ## 初期決定
 
@@ -229,3 +232,28 @@
 - `task-status.md` / `feature-status.md` / `blockers.md` を整合更新し、未解決blockerなしを明記。
 - 実行可能な未完了Taskは存在しないため、`current-task.md` は `task-none-waiting` を維持（管理運用待機）。
 - `STOP_REQUIRED.md` は未作成のまま（review判定STOP_REQUIREDではなく、AGENTS.md停止条件への新規該当なし）。
+
+## 2026-05-11 Manager更新（review NEEDS_REWORK反映・待機Task再是正）
+
+- 直近 `docs/management/review.md`（判定: `NEEDS_REWORK`）と `docs/results/task-005-yfinance-client-worker-result.md` を確認し、`current-task=task-none-waiting` と実差分が不一致であることを再確認。
+- `task-status.md` の `task-none-waiting` を `needs_rework`（Retry=3）へ更新し、`feature-status.md` の `operational-management` を `in_progress` へ更新。
+- `current-task.md` を `task-none-waiting` の差分整合回復タスクに更新し、完了条件を「`docs/management/**` を除く差分が `docs/results/task-none-waiting-worker-result.md` のみ」に明確化。
+- `STOP_REQUIRED` 判定条件（reviewがSTOP_REQUIRED、または仕様矛盾/依存追加必須等）には該当しないため、`docs/management/STOP_REQUIRED.md` は作成しない。
+
+## 2026-05-11 Manager更新（review OK反映・待機Taskクローズ）
+
+- 直近 `docs/management/review.md`（判定: `OK`）を反映し、`task-none-waiting` を `done` に更新。
+- `task-status.md` / `feature-status.md` / `blockers.md` を整合更新し、進行中Taskなし・停止条件なしを再確認。
+- 次に実行する正式Task（`docs/tasks/*.md`）が未定義のため、`current-task.md` は `Task ID: none` の待機状態へ戻した。
+
+## 2026-05-11 Human Decision反映（task-005最小定義で再開）
+
+- Human選択「先に最小のtask-005定義を作成してから進める」を反映。
+- `docs/tasks/task-005-market-data-client-stub.md` を新規作成し、MVP方針（外部APIなし）と整合する範囲でTaskを定義。
+- `docs/management/STOP_REQUIRED.md` を解消し、`current-task.md` を `task-005-market-data-client-stub` に更新して再開。
+
+## 2026-05-11 Human Decision反映（外部API連携を許可）
+
+- Human要求「少しでも早く株価情報をためたいので、外部API連携をありにしたい」を承認方針として反映。
+- `docs/specs/product-brief.md` と `docs/specs/mvp-scope.md` を更新し、外部株価API連携をMVPの許可範囲に変更。
+- `task-005` をスタブ方針からAPI実装方針へ切り替え、`task-005-market-data-client` として進行する。
