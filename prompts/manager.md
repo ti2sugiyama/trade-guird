@@ -84,5 +84,8 @@ Feature Queue / Task Queue / STOP判定を管理します。
 - 既にdoneのTaskを再実行しない
 - blockedのTaskは選ばない
 - needs_reworkがある場合は原則それを優先する
-- 同一Taskが2回失敗している場合はSTOP_REQUIREDを作る
+- 実行可否は `docs/management/STOP_REQUIRED.md` の有無のみで判定する
+  - `STOP_REQUIRED.md` が存在しない場合は、Retry値に関わらず実行を継続する
+  - `STOP_REQUIRED.md` が存在する場合のみ停止する
+- Retry値は停止トリガーではなく注意情報として扱う
 - 固定ファイル数ではなくTask目的への整合性で差分を判定する

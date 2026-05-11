@@ -6,24 +6,25 @@ NEEDS_REWORK
 
 ## 指摘事項
 
-- `current-task.md` の対象ファイル外の変更が含まれている。少なくとも `src/domain/types.ts` の変更が発生しており、Task受け入れ条件「変更ファイルが対象ファイル内に限定」に違反している。
-- 直近差分には Task 実行と無関係な変更（`docs/management/*.md`, `prompts/*.md`, `docs/tasks/task-004-tsconfig-build-compat.md`, `src/types.ts` など）も混在しており、この状態では Task 完了差分として不適切。
-- `docs/results/task-004-tsconfig-build-compat-worker-result.md` の「変更ファイル」記載と実差分が不一致。結果記録では `src/domain/types.ts` の変更が記載されていないため、受け入れ条件「結果記録と実差分の一致」を満たしていない。
-- `src/App.tsx` の金額入力は `Number(event.target.value)` 直接変換のため、非数値入力時に `NaN` を保持し得る実装。即時の build 失敗はないが、入力妥当性の観点でリスクが残る。
+- `docs/management/current-task.md` の対象スコープは `tsconfig.json` / `src/App.tsx` / `src/main.tsx` / `docs/results/task-004-tsconfig-build-compat-worker-result.md` に限定されているが、実差分に以下の対象外ファイル変更が含まれている。  
+  - `docs/management/decision-log.md`  
+  - `docs/management/feature-status.md`  
+  - `docs/management/task-status.md`  
+  - `prompts/manager.md`
+- 受け入れ条件「対象スコープ外の変更なし」を満たしていない。
+- `docs/results/task-004-tsconfig-build-compat-worker-result.md` は「変更ファイル=結果記録のみ」と記載しているが、実際の `git diff` は上記4ファイルも変更されており、「結果記録と実差分の一致」を満たしていない。
+- 参考確認として `npm run build` は 2026-05-11 時点で成功（`tsc -b && vite build` exit code 0）。ビルド成立自体は問題なし。
 
 ## 修正が必要な場合の理由
 
-- Task `task-004-tsconfig-build-compat` の受け入れ条件のうち、以下2点を満たせていないため。
-- 「変更ファイルが対象ファイル内に限定されている」
-- 「`git diff` の実態と結果記録の記載が一致している」
+- 本Taskの完了条件は「ビルド成功」だけでなく「対象スコープ外変更なし」と「結果記録と実差分一致」を同時に満たすこと。現状は後者2点に不一致があるため、Task目的に対して未達。
 
 ## STOP_REQUIREDが必要な場合の理由
 
-- 現時点では不要。
-- 理由: `npm run build` は成功しており、仕様矛盾・依存追加・DB/API契約変更・セキュリティ重大懸念・原因不明テスト失敗には該当しない。
+- 現時点では必須ではない。今回の不整合はスコープ逸脱と記録不一致であり、仕様矛盾・API契約変更・依存追加・セキュリティ/データ消失リスクは確認されなかったため。
 
 ## 次にManagerが見るべき点
 
-- `task-004` の完了判定は、対象ファイル内差分のみに絞った状態で再実行させること。
-- Worker結果ファイルの「変更ファイル」欄を実差分と1対1で一致させること。
-- `src/App.tsx` の `plannedAmount` 入力について、`NaN` 混入を許容するか（`input type="number"` や入力ガードを入れるか）をTask目的内で明確化すること。
+- `task-004` の判定対象diffを対象スコープ内変更のみに整えること（対象外変更を分離または巻き戻し）。
+- `docs/results/task-004-tsconfig-build-compat-worker-result.md` の変更ファイル一覧と理由を、最終的な `git diff` と完全一致させること。
+- `tsconfig.tsbuildinfo`（untracked）が運用上不要なら管理対象外であることを明確化すること。

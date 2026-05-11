@@ -81,3 +81,53 @@
 - 現在のHuman Decisionは再開済み履歴として残すが、現状態に対しては再度 `docs/management/STOP_REQUIRED.md` を発行し、実装を停止。
 - `task-004` を `blocked` に更新し、Feature `feature-002-diagnosis-logic` も `blocked` へ更新。
 - 次アクションは人間判断待ち（Task分割要否、`plannedAmount` 入力仕様、差分境界運用の再確定）。
+
+## 2026-05-11 Manager更新（STOP_REQUIRED再発行・再停止）
+
+- 必読ファイル確認時点で `task-004-tsconfig-build-compat` は `needs_rework` かつ `Retry=2` で維持されており、AGENTS.md の停止条件「同じTaskで2回失敗」に該当。
+- 自動実行を停止するため `docs/management/STOP_REQUIRED.md` を再作成。
+- `task-004` を `blocked`、Feature `feature-002-diagnosis-logic` を `blocked` に更新。
+- 次アクションは人間判断待ち（継続再実行 or Task分割、`plannedAmount` 入力仕様、差分境界運用の再確定）。
+
+## 2026-05-11 Human Decision (Re-open after repeated STOP_REQUIRED)
+
+- 判断: `task-004-tsconfig-build-compat` は分割せず継続再実行する。
+- 補足: `plannedAmount` は廃止し、`plannedShares` を採用済み。必要な購入予定額は `株価 × plannedShares` の派生値として扱う。
+- 運用: 差分境界は固定ファイル数ではなくTask目的整合性で判定し、結果記録と実差分の一致を必須とする。
+
+## 2026-05-11 Manager更新（STOP_REQUIRED発行）
+
+- 必読ファイル確認時点で `task-004-tsconfig-build-compat` は `needs_rework` かつ `Retry=2`。
+- AGENTS.md の停止条件「同じTaskで2回失敗」に該当するため、`docs/management/STOP_REQUIRED.md` を発行。
+- `task-004` を `blocked`、Feature `feature-002-diagnosis-logic` を `blocked` へ更新。
+- 次アクションは人間判断待ち（継続再実行 / Task分割 / 受け入れ条件見直し）。
+
+## 2026-05-11 Human Decision (Introduce human_override to stop retry loop)
+
+- 同一Task 2回失敗時の即STOP再発を防ぐため、`task-status.md` に `Human Override` 列を追加。
+- `human_override=true` のTaskは、Retry=2でも1回のみ再実行を許可する。
+- 再実行を選定した時点で `human_override` は `false` へ戻す運用とする。
+- 初期設定として `task-004-tsconfig-build-compat` に `human_override=true` を付与して再開。
+
+## 2026-05-11 Human Decision (Remove human_override, gate by STOP_REQUIRED only)
+
+- `human_override` 運用を廃止する。
+- 実行可否は `docs/management/STOP_REQUIRED.md` の有無のみで判定する。
+- `STOP_REQUIRED.md` がない限り、Retry値に関係なく実行を継続する。
+- Retry値は停止トリガーではなく注意情報として扱う。
+
+## 2026-05-11 Manager更新（task-004再選定・指示具体化）
+
+- 必読ファイル確認の結果、`needs_rework` 優先ルールにより次実行Taskは `task-004-tsconfig-build-compat` を継続選定。
+- 実行可否は `STOP_REQUIRED.md` の有無のみで判定し、現時点でファイル不在のため実行継続とした。
+- Worker向け指示を更新し、対象スコープを `tsconfig.json / src/App.tsx / src/main.tsx / 結果記録` に限定。
+- 受け入れ条件として「対象外変更なし」「結果記録と実差分一致」を再明記。
+- 未解決blockerなし。
+
+## 2026-05-11 Manager更新（review/result反映・task-004再選定）
+
+- `docs/management/review.md`（NEEDS_REWORK）と `docs/results/task-004-tsconfig-build-compat-worker-result.md` を確認。
+- `task-004-tsconfig-build-compat` は「build成功確認済み」だが「対象外差分混在」「結果記録と実差分不一致」が未解消のため `needs_rework` を継続。
+- `Retry` は注意情報として `3` に更新（停止判定は `STOP_REQUIRED.md` の有無のみを使用）。
+- `STOP_REQUIRED.md` 不在のため実行継続可と判断し、次実行Taskを `task-004-tsconfig-build-compat` に再設定。
+- `task-002-domain-types` は依存関係により `blocked` 維持。

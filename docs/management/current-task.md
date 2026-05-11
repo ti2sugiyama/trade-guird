@@ -10,30 +10,31 @@ feature-002-diagnosis-logic
 
 ## 目的
 
-`npm run build` を安定して成功させるために必要な最小修正を行い、結果記録を実差分と一致させる。
+`task-004` の受け入れ条件を満たして完了判定可能にする。特に「対象スコープ外変更なし」と「結果記録と実差分一致」を成立させる。
 
 ## 対象スコープ
 
-- TypeScript / ビルド設定
-- ビルド失敗に直接関与する実装ファイル
-- 当該Taskの結果記録ファイル
+- `tsconfig.json`
+- `src/App.tsx`
+- `src/main.tsx`
+- `docs/results/task-004-tsconfig-build-compat-worker-result.md`
 
 ## 実装内容
 
-- `npm run build` 失敗原因を解消する最小変更を実装する。
-- 変更はTask目的に直接必要なものに限定する。
-- 実際に変更したファイルを結果記録へ列挙し、各ファイルの変更理由を1行で記録する。
+- 対象スコープ内でのみ必要最小限の修正を行う（不要ならコード変更なし可）。
+- `npm run build` を実行し、成功結果を確認する。
+- 結果ファイルに「実際にこのTaskで変更したファイル」「各変更理由（1行）」「実行コマンド」「結果」を記録し、実差分と一致させる。
 
 ## 受け入れ条件
 
 - `npm run build` が成功する。
 - 依存パッケージ追加なし。
-- 目的外変更がない。
-- 結果記録（変更ファイル・理由・テスト結果）が実差分と一致する。
+- このTaskで新規に発生させた差分が対象スコープ内に限定される。
+- `docs/results/task-004-tsconfig-build-compat-worker-result.md` の記載が実差分と一致する。
 
 ## 実行するテスト
 
-- npm run build
+- `npm run build`
 
 ## 禁止事項
 
@@ -44,7 +45,7 @@ feature-002-diagnosis-logic
 
 ## 完了後の記録先
 
-- docs/results/task-004-tsconfig-build-compat-worker-result.md
-- docs/management/task-status.md
-- docs/management/feature-status.md
-- docs/management/decision-log.md
+- `docs/results/task-004-tsconfig-build-compat-worker-result.md`
+- `docs/management/task-status.md`
+- `docs/management/feature-status.md`
+- `docs/management/decision-log.md`
