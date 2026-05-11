@@ -2,7 +2,7 @@
 
 ## Task ID
 
-task-004-tsconfig-build-compat
+task-manager-stop-resolution-2026-05-11
 
 ## Feature
 
@@ -10,42 +10,38 @@ feature-002-diagnosis-logic
 
 ## 目的
 
-`task-004` の受け入れ条件を満たして完了判定可能にする。特に「対象スコープ外変更なし」と「結果記録と実差分一致」を成立させる。
+`STOP_REQUIRED` を解消するため、`task-004-tsconfig-build-compat` の差分許容範囲と運用ルールを人間判断で確定する。
 
 ## 対象スコープ
 
-- `tsconfig.json`
-- `src/App.tsx`
-- `src/main.tsx`
-- `docs/results/task-004-tsconfig-build-compat-worker-result.md`
+- docs/management/STOP_REQUIRED.md
+- docs/management/current-task.md
 
 ## 実装内容
 
-- 対象スコープ内でのみ必要最小限の修正を行う（不要ならコード変更なし可）。
-- `npm run build` を実行し、成功結果を確認する。
-- 結果ファイルに「実際にこのTaskで変更したファイル」「各変更理由（1行）」「実行コマンド」「結果」を記録し、実差分と一致させる。
+- コード実装・Task再実行は行わない。
+- 以下の3点について人間判断を取得する。
+  1. `task-004` の最終差分として許可するファイル範囲
+  2. `tsconfig.tsbuildinfo` の扱い
+  3. 結果ファイル記載を最終 `git diff` と一致させる運用ルール
+- 判断確定後、Managerが次に実行するTaskを1件再選定する。
 
 ## 受け入れ条件
 
-- `npm run build` が成功する。
-- 依存パッケージ追加なし。
-- このTaskで新規に発生させた差分が対象スコープ内に限定される。
-- `docs/results/task-004-tsconfig-build-compat-worker-result.md` の記載が実差分と一致する。
+- 上記3論点の判断結果が明文化されていること。
+- `STOP_REQUIRED.md` 解消前に Worker が実装Taskを実行しないこと。
 
 ## 実行するテスト
 
-- `npm run build`
+- なし（停止フェーズ）
 
 ## 禁止事項
 
-- 仕様追加禁止
-- UI文言の大幅変更禁止
-- dependency追加禁止
-- 目的外のリファクタ禁止
+- コード実装
+- `task-004-tsconfig-build-compat` の再試行
+- `STOP_REQUIRED.md` 未解消でのTask進行
 
 ## 完了後の記録先
 
-- `docs/results/task-004-tsconfig-build-compat-worker-result.md`
-- `docs/management/task-status.md`
-- `docs/management/feature-status.md`
-- `docs/management/decision-log.md`
+- docs/management/current-task.md
+- docs/management/STOP_REQUIRED.md

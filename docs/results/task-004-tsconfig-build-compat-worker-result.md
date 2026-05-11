@@ -7,8 +7,8 @@ task-004-tsconfig-build-compat
 ## 実装内容
 
 - 対象スコープ（`tsconfig.json` / `src/App.tsx` / `src/main.tsx`）の現状を確認した。
-- `npm run build` を実行し、`tsc -b && vite build` が成功することを確認した。
-- ビルド失敗は再現せず、対象スコープのコード変更は不要と判断した。
+- `npm run build` を実行し、`tsc -b && vite build` の成功を確認した。
+- 対象スコープ内のコード修正は不要と判断し、コード変更は行わなかった。
 
 ## 変更ファイル
 
@@ -16,15 +16,15 @@ task-004-tsconfig-build-compat
 
 ## 変更理由（ファイルごと）
 
-- `docs/results/task-004-tsconfig-build-compat-worker-result.md`: 実差分と実行結果を一致させるため、結果記録を実態に合わせて更新。
+- `docs/results/task-004-tsconfig-build-compat-worker-result.md`: Task実行結果と最終差分確認内容を記録するため。
 
 ## 実行したテスト
 
-- `npm run build`（実行コマンド: `tsc -b && vite build`）
+- `npm run build`
 
 ## 結果
 
-- 成功（production build 完了、exit code 0）。
+- 成功（`tsc -b && vite build` が exit code 0 で完了）。
 
 ## 未解決事項
 
@@ -32,4 +32,5 @@ task-004-tsconfig-build-compat
 
 ## 注意点
 
-- 本Taskでは対象スコープ内コードの追加修正は不要だった。
+- このTaskで新規に発生させた差分は結果ファイルのみ（対象スコープ内）とした。
+- 対象スコープ内コード（`tsconfig.json` / `src/App.tsx` / `src/main.tsx`）の追加修正は不要だった。

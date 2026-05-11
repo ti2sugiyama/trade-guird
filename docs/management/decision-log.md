@@ -131,3 +131,19 @@
 - `Retry` は注意情報として `3` に更新（停止判定は `STOP_REQUIRED.md` の有無のみを使用）。
 - `STOP_REQUIRED.md` 不在のため実行継続可と判断し、次実行Taskを `task-004-tsconfig-build-compat` に再設定。
 - `task-002-domain-types` は依存関係により `blocked` 維持。
+
+## 2026-05-11 Manager更新（task-004再実行指示の明確化）
+
+- 必読ファイル確認の結果、`needs_rework` 優先ルールにより次実行Taskは `task-004-tsconfig-build-compat` を継続選定。
+- `docs/management/STOP_REQUIRED.md` は不在のため、停止せず実行継続と判断。
+- `current-task.md` を更新し、Worker向けに「対象外差分を最終差分から除外」「結果記録と最終 `git diff` の1ファイル単位一致」を明示。
+- `task-status.md` の `task-004` は `needs_rework` 維持、Retryは注意情報として `4` に更新。
+- blockerは新規発生なし（`blockers.md` 維持）。
+
+## 2026-05-11 Human Decision (Close STOP_REQUIRED for task-004)
+
+- 判断: `STOP_REQUIRED` の3論点をすべて許可し、本停止をクローズする。
+- 許可1: `task-004` の最終差分として許可するファイル範囲は `tsconfig.json` / `src/App.tsx` / `src/main.tsx` / `docs/results/task-004-tsconfig-build-compat-worker-result.md` に確定。
+- 許可2: `docs/results/task-004-tsconfig-build-compat-worker-result.md` は最終 `git diff` と1ファイル単位で一致させる運用を確定。
+- 許可3: `tsconfig.tsbuildinfo` は差分に含めない運用とし、追跡対象外として扱う方針を確定。
+- 再開条件を満たしたため、`docs/management/STOP_REQUIRED.md` を解消して実行再開する。
