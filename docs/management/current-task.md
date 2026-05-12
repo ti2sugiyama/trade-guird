@@ -2,43 +2,51 @@
 
 ## Task ID
 
-task-none-waiting
+task-009-jp-master-official-import
 
 ## Feature
 
-operational-management
+feature-007-jp-master-import-and-unfetched-visibility
 
 ## 目的
 
-`docs/management/review.md`（2026-05-12 判定: `NEEDS_REWORK`）に基づき、待機運用Taskの結果記録と実差分の整合を確実に回復する。
+`review.md`（2026-05-12 判定: `NEEDS_REWORK`）の指摘を解消し、task-009 を再提出可能な状態にする。
+完了判定差分を task-009 対象3ファイルのみに収束させる。
 
 ## 対象スコープ
 
-- `docs/results/task-none-waiting-worker-result.md`
+- `src/collect_yahoo_prices_csv.py`
+- `src/data/embeddedMarketCsv.ts`
+- `docs/results/task-009-jp-master-official-import-worker-result.md`
 
 ## 実装内容
 
-- `task-none-waiting` が待機運用Task（非実装Task）であることを結果記録上で明確化する。
-- 結果記録の記述を、最新レビュー指摘（Task目的と実差分の不一致）と矛盾しない内容に限定する。
-- 本Taskでは仕様追加・設計変更・コード実装を行わず、記録整合の回復のみに限定する。
+- task-009 の完了判定差分から対象外ファイルを除外し、対象3ファイルのみを残す。
+- `docs/results/task-009-jp-master-official-import-worker-result.md` の「変更ファイル」「実行コマンド」「確認結果」を再提出時点の実差分・実行結果に一致させる。
+- `*.tsbuildinfo` を task-009 の差分に含めない。
 
 ## 受け入れ条件
 
-- `docs/results/task-none-waiting-worker-result.md` の内容が `review.md`（2026-05-12, `NEEDS_REWORK`）の指摘と矛盾しない。
-- 待機運用Taskとしての目的・実施内容・完了判定を、当該記録単体で第三者が追跡できる。
-- 本Task完了時点で、完了判定対象差分に実装Task相当の作業記録を含めない。
+- `git diff --name-only`（task-009 完了判定対象）で対象3ファイルのみが出力される。
+- `python3 src/collect_yahoo_prices_csv.py --help` が成功する。
+- 最小入力CSVによる公式マスタ取り込みコマンドが成功する。
+- `npm run build` が成功する。
+- 結果記録の記載内容が実差分・実行結果と一致している。
 
 ## 実行するテスト
 
-- なし（管理運用タスク）
+- `python3 src/collect_yahoo_prices_csv.py --help`
+- `python3 src/collect_yahoo_prices_csv.py --official-master-csv <最小入力CSV> --append-suffix .T --master-out-ts <出力先> --out-dir <出力先>`
+- `npm run build`
 
 ## 禁止事項
 
-- コード実装をしない。
-- `src/**`、`tsconfig.json` を変更しない。
-- 仕様追加、API/DB/Auth/Paymentに関わる判断をしない。
-- Task目的外の管理ファイルを更新しない。
+- 実装差分の許可範囲（`src/**`、`docs/results/**`、`tsconfig.json`）を超える変更をしない。
+- task-009 で UI 実装をしない。
+- 依存パッケージを追加しない。
+- 仕様外の列追加や独自ルール強制をしない。
+- `docs/management/**` を Task 完了差分として扱わない。
 
 ## 完了後の記録先
 
-- `docs/results/task-none-waiting-worker-result.md`
+- `docs/results/task-009-jp-master-official-import-worker-result.md`

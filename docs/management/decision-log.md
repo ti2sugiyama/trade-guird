@@ -267,3 +267,52 @@
 - `STOP_REQUIRED` 条件（reviewがSTOP_REQUIRED、または仕様矛盾/API契約変更/DB変更/依存追加必須/原因不明テスト失敗等）には該当しないため、`docs/management/STOP_REQUIRED.md` は作成しない。
 
 - 2026-05-12: `review.md` 最新判定 `NEEDS_REWORK`（task-none-waiting）を反映。`task-none-waiting` を `needs_rework` に更新し、次実行Taskとして再設定。STOP_REQUIRED非該当を確認。
+
+## 2026-05-12 Manager Decision (Task 007 rework継続)
+
+- 入力確認: `review.md` 最新判定は `NEEDS_REWORK`。主因は `task-007` 判定時に `docs/results/task-none-waiting-worker-result.md` が混在している点。
+- 判定: `task-007-data-management-page-mvp` を `needs_rework` 継続（Retry: 3）。
+- 次アクション: Workerには Task 007 判定差分を `src/**` と `docs/results/task-007-data-management-page-mvp-worker-result.md`（必要時 `tsconfig.json`）へ収束させる指示を再発行。
+- STOP判定: `STOP_REQUIRED.md` 作成条件には非該当（仕様矛盾・依存追加・原因不明テスト失敗なし）。
+
+## 2026-05-12 Manager更新（task-008 判定維持・Queue更新）
+
+- 入力確認: `docs/management/review.md`（判定 `NEEDS_REWORK`）と `docs/results/task-008-data-management-row-fetch-action-worker-result.md` を確認。
+- 判定: `task-008-data-management-row-fetch-action` は `needs_rework` 継続。理由は、完了判定対象外と指定済みの未追跡差分（`docs/features/feature-006-data-refresh-ui.md`、`docs/tasks/task-008-data-management-row-fetch-action.md`、`docs/results/task-007-data-management-page-mvp-worker-result.md`）が残存しているため。
+- 更新: `task-status.md` の `task-008` Retry を注意情報として `3` へ更新。`current-task.md` は同Taskを継続選定し、差分収束条件を明記。
+- blocker/feature: 停止blockerなしを維持。`feature-006-data-refresh-ui` は `in_progress` 継続。
+- STOP判定: `review.md` の判定は `STOP_REQUIRED` ではなく、AGENTS.md停止条件（仕様矛盾、依存追加必須、原因不明テスト失敗など）にも非該当のため `docs/management/STOP_REQUIRED.md` は作成しない。
+
+## 2026-05-12 Manager更新（review再反映・task-008継続）
+
+- 入力確認: `docs/management/review.md`（判定 `NEEDS_REWORK`）と `docs/results/task-008-data-management-row-fetch-action-worker-result.md` を再確認。
+- 判定: `task-008-data-management-row-fetch-action` は `needs_rework` 継続。理由は、review指摘の通り結果記録（変更ファイル/変更理由）と完了判定時点の実差分一致を最終確定する必要があるため。
+- 更新: `current-task.md` を同Task継続に更新し、作業焦点を「結果記録と実差分一致確認」に整理。`task-status.md` の `task-008` を `needs_rework` 維持（Retryは注意情報として `5`）。
+- 付随更新: `blockers.md` と `feature-status.md` の注意情報を同期更新。
+- STOP判定: `review.md` の判定は `STOP_REQUIRED` ではなく、AGENTS.md停止条件（仕様矛盾、依存追加必須、原因不明テスト失敗など）にも非該当のため `docs/management/STOP_REQUIRED.md` は作成しない。
+
+## 2026-05-12 Manager更新（review + results 照合反映）
+
+- 入力確認: `review.md`（判定 `NEEDS_REWORK`）と `docs/results/task-008-data-management-row-fetch-action-worker-result.md` / `docs/results/task-none-waiting-worker-result.md` を確認。
+- 判定: `task-008-data-management-row-fetch-action` は `needs_rework` 継続。理由は、review指摘どおり許可範囲外差分混在（`scripts/**`、`src/collect_yahoo_prices_csv.py`）により完了条件未達のため。
+- 更新: `current-task.md` を `task-008` 継続指示で維持更新。`task-status.md` の `task-008` は `needs_rework` 継続（Retryは注意情報として `6` 維持）。
+- blocker: 停止blockerなしを維持し、`blockers.md` を最新注意情報に同期。
+- STOP判定: `review.md` 判定は `STOP_REQUIRED` ではなく、AGENTS.md 停止条件（仕様矛盾、契約変更、依存追加必須、原因不明テスト失敗等）にも非該当のため `docs/management/STOP_REQUIRED.md` は作成しない。
+
+## 2026-05-12 Architect判断（Feature 007 境界確認）
+
+- 対象要求: 「日本株の銘柄マスタを公式データから取り込み、価格CSV未取得の銘柄もデータ管理一覧に表示する」。
+- 判断1: MVPでは Backend/API を新設しない。公式データ取り込みは `src/collect_yahoo_prices_csv.py` による前処理で完結させる。
+- 判断2: 一覧の正本は「銘柄マスタ基準」とし、価格CSV有無は domain で `fetched/unfetched` 判定する。
+- 判断3: Frontend は表示責務に限定し、未取得判定ロジックを持たない。
+- 判断4: Storage は localStorage の薄いラッパーに限定し、銘柄マスタ正本は `src/data` 生成物を参照する。
+- 追記先: `docs/specs/architecture.md` に Feature 007 向け境界定義と依存方向を追加。
+- STOP_REQUIRED 判定: 非該当（仕様矛盾、API契約変更必須、DB設計変更、依存追加のいずれも不要）。
+
+## 2026-05-12 Manager更新（review NEEDS_REWORK反映・task-009再提出指示）
+
+- 入力確認: `docs/management/review.md`（判定 `NEEDS_REWORK`）と `docs/results/task-009-jp-master-official-import-worker-result.md` を確認。
+- 判定: `task-009-jp-master-official-import` を `needs_rework` に更新（Retryは注意情報として `1`）。
+- 理由: task-009 対象外差分（`src/App.tsx`、`src/App.css`、`README.md`、`scripts/run-feature-cycle.sh`、`docs/specs/architecture.md`）が混在し、完了差分の許可範囲整合が未達。
+- 更新: `current-task.md` を task-009 再作業指示へ更新し、完了条件を「対象3ファイルへの差分収束」に明確化。`task-status.md` / `blockers.md` を同期更新。
+- STOP判定: `review.md` は `STOP_REQUIRED` ではなく、AGENTS.md 停止条件（仕様矛盾・依存追加必須・原因不明テスト失敗等）にも非該当のため `docs/management/STOP_REQUIRED.md` は作成しない。

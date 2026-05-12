@@ -9,4 +9,6 @@ Feature状態は `docs/management/task-status.md` の `Task` 行から判断し�
 | feature-002-diagnosis-logic | done | `task-002` / `task-003` / `task-004` の完了を `review.md`(2026-05-11) と各結果記録で確認 |
 | feature-003-market-data-adapter | done | `review.md`(2026-05-11) 判定 `OK` を反映し、`task-005-market-data-client` 完了を確認。 |
 | feature-004-real-market-diagnosis | done | `review.md`(2026-05-12) 判定 `OK` を反映し、`task-006-real-market-diagnosis-adapter` 完了を確認。 |
-| operational-management | needs_rework | `review.md`(2026-05-12) 判定 `NEEDS_REWORK` により `task-none-waiting` の記録整合を再作業中。 |
+| feature-005-data-management-page | done | `review.md`(2026-05-12) 最新判定 `OK` を反映し、`task-007-data-management-page-mvp` 完了を確認。 |
+| feature-006-data-refresh-ui | done | `review.md`(2026-05-12) 最新判定 `OK` を反映し、`task-008-data-management-row-fetch-action` 完了を確認。 |
+| operational-management | done | 待機運用Task `task-none-waiting` は `done` 維持。 |
