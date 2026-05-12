@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { embeddedMarketCsv } from './data/embeddedMarketCsv';
+import { embeddedMarketCsv, embeddedMarketMasterCsv } from './data/embeddedMarketCsv';
 import { buildDiagnosisInputFromMarketCsv, evaluateDiagnosis } from './domain/diagnosis';
 import type {
   DiagnosisInput,
@@ -29,10 +29,7 @@ type DataManagementRow = {
   missingDays: number;
 };
 
-const registeredTickers: Array<{ symbol: string; name: string }> = [
-  { symbol: '8035.T', name: '東京エレクトロン' },
-  { symbol: '7203.T', name: 'トヨタ自動車' },
-];
+type MasterTicker = { symbol: string; name: string };
 
 const initialInput: DiagnosisInput = {
   tickerName: '',
@@ -66,6 +63,31 @@ function parseEmbeddedRows(csvText: string): Array<{ symbol: string; date: strin
   });
 }
 
+function parseEmbeddedMasterRows(csvText: string): MasterTicker[] {
+  const lines = csvText
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (lines.length <= 1) {
+    return [];
+  }
+
+  const rows = lines.slice(1).flatMap((line) => {
+    const columns = line.split(',');
+    if (columns.length < 2) {
+      return [];
+    }
+    const symbol = columns[0].trim();
+    const name = columns[1].trim();
+    if (!symbol) {
+      return [];
+    }
+    return [{ symbol, name: name || symbol }];
+  });
+
+  return rows.filter((row, index) => rows.findIndex((candidate) => candidate.symbol === row.symbol) === index);
+}
+
 function diffDays(fromIsoDate: string, to: Date): number {
   const from = new Date(`${fromIsoDate}T00:00:00Z`);
   if (Number.isNaN(from.getTime())) {
@@ -75,13 +97,29 @@ function diffDays(fromIsoDate: string, to: Date): number {
   return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
 }
 
-function buildDataRows(csvText: string, now: Date): DataManagementRow[] {
+function buildDataRows(csvText: string, masterCsvText: string, now: Date): DataManagementRow[] {
   const parsedRows = parseEmbeddedRows(csvText);
-  const knownTickerNames = new Map(registeredTickers.map((ticker) => [ticker.symbol, ticker.name] as const));
-  const symbols = [...new Set(parsedRows.map((row) => row.symbol))].sort((a, b) => a.localeCompare(b));
+  const masterRows = parseEmbeddedMasterRows(masterCsvText);
+  const knownTickerNames = new Map(masterRows.map((ticker) => [ticker.symbol, ticker.name] as const));
+  const symbols = (
+    masterRows.length > 0
+      ? masterRows.map((ticker) => ticker.symbol)
+      : [...new Set(parsedRows.map((row) => row.symbol))]
+  ).sort((a, b) => a.localeCompare(b));
 
   return symbols.map((symbol) => {
     const rows = parsedRows.filter((row) => row.symbol === symbol);
+    if (rows.length === 0) {
+      return {
+        symbol,
+        name: knownTickerNames.get(symbol) ?? symbol,
+        status: 'failed',
+        latestDate: null,
+        latestFetchedAtUtc: null,
+        staleDays: null,
+        missingDays: REQUIRED_HISTORY_DAYS,
+      } satisfies DataManagementRow;
+    }
 
     const uniqueDates = [...new Set(rows.map((row) => row.date))].sort((a, b) => a.localeCompare(b));
     const latestDate = uniqueDates[uniqueDates.length - 1];
@@ -167,8 +205,9 @@ export default function App() {
   const [missingDaysFilter, setMissingDaysFilter] = useState(0);
   const [fetchPreparation, setFetchPreparation] = useState<FetchPreparation | null>(null);
 
+  const registeredTickers = useMemo(() => parseEmbeddedMasterRows(embeddedMarketMasterCsv), []);
   const history = useMemo(() => loadHistory(), [historyVersion]);
-  const dataRows = useMemo(() => buildDataRows(embeddedMarketCsv, new Date()), []);
+  const dataRows = useMemo(() => buildDataRows(embeddedMarketCsv, embeddedMarketMasterCsv, new Date()), []);
 
   const filteredDataRows = useMemo(() => {
     const query = queryFilter.trim().toLowerCase();
