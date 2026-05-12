@@ -11,6 +11,7 @@ import csv
 import datetime as dt
 import json
 import random
+import re
 import sys
 import time
 import urllib.error
@@ -31,7 +32,17 @@ def parse_ymd_date(value: str, name: str) -> dt.date:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Collect Yahoo daily prices to CSV")
-    parser.add_argument("--symbols-file", required=True, help="Text file: one symbol per line")
+    parser.add_argument("--symbols-file", default="", help="Text file: one symbol per line")
+    parser.add_argument(
+        "--official-master-csv",
+        default="",
+        help="Official JP master CSV input file (code/name columns required)",
+    )
+    parser.add_argument(
+        "--master-out-ts",
+        default="src/data/embeddedMarketCsv.ts",
+        help="TS output path for embedded master CSV",
+    )
     parser.add_argument("--out-dir", default="data/collector", help="Output directory")
     parser.add_argument("--days", type=int, default=60, help="Keep latest N daily rows per symbol")
     parser.add_argument(
@@ -84,6 +95,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=42, help="Random seed for retry jitter")
     args = parser.parse_args()
 
+    if not args.symbols_file and not args.official_master_csv:
+        parser.error("Either --symbols-file or --official-master-csv is required")
+
     if args.end_date and not args.start_date:
         parser.error("--end-date requires --start-date")
 
@@ -111,6 +125,66 @@ def load_symbols(path: Path, suffix: str) -> List[str]:
         symbols.append(symbol)
     unique_symbols = list(dict.fromkeys(symbols))
     return unique_symbols
+
+
+def normalize_master_symbol(raw_code: str, suffix: str) -> str:
+    code = raw_code.strip()
+    if not code:
+        return ""
+    code = re.sub(r"\.0+$", "", code)
+    if suffix and "." not in code:
+        code = f"{code}{suffix}"
+    return code
+
+
+def pick_first(data: dict, keys: List[str]) -> str:
+    for key in keys:
+        if key in data and data[key] is not None:
+            return str(data[key]).strip()
+    return ""
+
+
+def load_official_master(path: Path, suffix: str) -> Tuple[List[Tuple[str, str]], List[dict]]:
+    rows: List[Tuple[str, str]] = []
+    failures: List[dict] = []
+    with path.open("r", newline="", encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f)
+        if not reader.fieldnames:
+            raise RuntimeError("official master CSV has no header row")
+        for line_no, raw in enumerate(reader, start=2):
+            code = pick_first(raw, ["code", "symbol", "ticker", "銘柄コード", "コード"])
+            name = pick_first(raw, ["name", "ticker_name", "銘柄名", "銘柄名称", "名称"])
+            symbol = normalize_master_symbol(code, suffix)
+            if not symbol or not name:
+                failures.append(
+                    {
+                        "line": line_no,
+                        "code": code,
+                        "name": name,
+                        "reason": "missing code or name",
+                    }
+                )
+                continue
+            rows.append((symbol, name))
+    unique = list(dict.fromkeys(rows))
+    return unique, failures
+
+
+def to_embedded_template_literal(csv_text: str) -> str:
+    return csv_text.replace("\\", "\\\\").replace("`", "\\`").replace("${", "\\${")
+
+
+def write_embedded_market_data(path: Path, master_rows: List[Tuple[str, str]]) -> None:
+    master_csv_lines = ["symbol,name"]
+    master_csv_lines.extend([f"{symbol},{name}" for symbol, name in master_rows])
+    master_csv_text = "\n".join(master_csv_lines)
+
+    ts_content = (
+        "export const embeddedMarketCsv = `symbol,date,open,high,low,close,volume,fetched_at_utc\\n`;\n\n"
+        f"export const embeddedMarketMasterCsv = `{to_embedded_template_literal(master_csv_text)}`;\n"
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(ts_content, encoding="utf-8")
 
 
 def fetch_symbol(
@@ -184,92 +258,125 @@ def main() -> int:
     args = parse_args()
     random.seed(args.seed)
 
-    symbols_path = Path(args.symbols_file)
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    symbols = load_symbols(symbols_path, args.append_suffix)
-    if not symbols:
-        print("No symbols loaded.", file=sys.stderr)
-        return 2
-
     now = dt.datetime.now(dt.timezone.utc)
     stamp = now.strftime("%Y%m%d_%H%M%S")
-    csv_path = out_dir / f"prices_{stamp}.csv"
-    failed_path = out_dir / f"failed_symbols_{stamp}.txt"
     report_path = out_dir / f"run_report_{stamp}.json"
+    master_failures: List[dict] = []
+    master_rows: List[Tuple[str, str]] = []
+    master_output_path = ""
 
-    window_sec = max(0.0, args.window_hours * 3600.0)
-    target_interval = window_sec / len(symbols) if symbols else 0.0
-    delay_sec = max(args.min_delay_sec, target_interval)
-
-    print(f"Symbols: {len(symbols)}")
-    print(f"Delay between symbols: {delay_sec:.1f} sec")
-    print(f"Output: {csv_path}")
+    if args.official_master_csv:
+        master_path = Path(args.official_master_csv)
+        master_rows, master_failures = load_official_master(master_path, args.append_suffix)
+        if not master_rows:
+            print("No valid master rows loaded.", file=sys.stderr)
+            return 2
+        out_ts = Path(args.master_out_ts)
+        write_embedded_market_data(out_ts, master_rows)
+        master_output_path = str(out_ts)
+        print(f"Master imported: {len(master_rows)} rows")
+        print(f"Master output: {out_ts}")
 
     success_count = 0
     failed: List[Tuple[str, str]] = []
     total_rows = 0
+    delay_sec = 0.0
+    csv_path = ""
+    failed_path = ""
     start_ts = time.time()
-    next_slot = start_ts
 
-    with csv_path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerow(["symbol", "date", "open", "high", "low", "close", "volume", "fetched_at_utc"])
+    if args.symbols_file:
+        symbols_path = Path(args.symbols_file)
+        symbols = load_symbols(symbols_path, args.append_suffix)
+        if not symbols:
+            print("No symbols loaded.", file=sys.stderr)
+            return 2
+        csv_file_path = out_dir / f"prices_{stamp}.csv"
+        failed_file_path = out_dir / f"failed_symbols_{stamp}.txt"
+        csv_path = str(csv_file_path)
+        failed_path = str(failed_file_path)
 
-        for idx, symbol in enumerate(symbols, start=1):
-            sleep_until(next_slot)
+        window_sec = max(0.0, args.window_hours * 3600.0)
+        target_interval = window_sec / len(symbols) if symbols else 0.0
+        delay_sec = max(args.min_delay_sec, target_interval)
 
-            last_error = ""
-            rows: List[Tuple[str, float, float, float, float, int]] = []
+        print(f"Symbols: {len(symbols)}")
+        print(f"Delay between symbols: {delay_sec:.1f} sec")
+        print(f"Output: {csv_file_path}")
 
-            for attempt in range(args.max_retries + 1):
-                try:
-                    rows = fetch_symbol(
-                        symbol,
-                        args.range_value,
-                        args.start_date,
-                        args.end_date,
-                        args.interval,
-                        args.timeout_sec,
-                    )
-                    if not rows:
-                        raise RuntimeError("No rows returned")
-                    break
-                except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, RuntimeError, ValueError) as exc:
-                    last_error = str(exc)
-                    if attempt >= args.max_retries:
+        next_slot = start_ts
+        with csv_file_path.open("w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(["symbol", "date", "open", "high", "low", "close", "volume", "fetched_at_utc"])
+
+            for idx, symbol in enumerate(symbols, start=1):
+                sleep_until(next_slot)
+
+                last_error = ""
+                rows: List[Tuple[str, float, float, float, float, int]] = []
+
+                for attempt in range(args.max_retries + 1):
+                    try:
+                        rows = fetch_symbol(
+                            symbol,
+                            args.range_value,
+                            args.start_date,
+                            args.end_date,
+                            args.interval,
+                            args.timeout_sec,
+                        )
+                        if not rows:
+                            raise RuntimeError("No rows returned")
                         break
-                    wait_sec = args.retry_wait_sec * (2 ** attempt) + random.uniform(0, 15)
-                    print(f"[{idx}/{len(symbols)}] {symbol} retry {attempt + 1}/{args.max_retries} in {wait_sec:.1f}s")
-                    time.sleep(wait_sec)
+                    except (
+                        urllib.error.URLError,
+                        urllib.error.HTTPError,
+                        TimeoutError,
+                        RuntimeError,
+                        ValueError,
+                    ) as exc:
+                        last_error = str(exc)
+                        if attempt >= args.max_retries:
+                            break
+                        wait_sec = args.retry_wait_sec * (2 ** attempt) + random.uniform(0, 15)
+                        print(
+                            f"[{idx}/{len(symbols)}] {symbol} retry {attempt + 1}/{args.max_retries} in {wait_sec:.1f}s"
+                        )
+                        time.sleep(wait_sec)
 
-            if rows:
-                trimmed = rows[-args.days :]
-                fetched_at = dt.datetime.now(dt.timezone.utc).isoformat()
-                for row in trimmed:
-                    writer.writerow([symbol, *row, fetched_at])
-                total_rows += len(trimmed)
-                success_count += 1
-                print(f"[{idx}/{len(symbols)}] OK {symbol} rows={len(trimmed)}")
-            else:
-                failed.append((symbol, last_error))
-                print(f"[{idx}/{len(symbols)}] NG {symbol} error={last_error}")
+                if rows:
+                    trimmed = rows[-args.days :]
+                    fetched_at = dt.datetime.now(dt.timezone.utc).isoformat()
+                    for row in trimmed:
+                        writer.writerow([symbol, *row, fetched_at])
+                    total_rows += len(trimmed)
+                    success_count += 1
+                    print(f"[{idx}/{len(symbols)}] OK {symbol} rows={len(trimmed)}")
+                else:
+                    failed.append((symbol, last_error))
+                    print(f"[{idx}/{len(symbols)}] NG {symbol} error={last_error}")
 
-            next_slot += delay_sec
+                next_slot += delay_sec
 
-    with failed_path.open("w", encoding="utf-8") as f:
-        for symbol, reason in failed:
-            f.write(f"{symbol}\t{reason}\n")
+        with failed_file_path.open("w", encoding="utf-8") as f:
+            for symbol, reason in failed:
+                f.write(f"{symbol}\t{reason}\n")
 
+    symbols_total = success_count + len(failed)
     elapsed = time.time() - start_ts
     report = {
         "started_at_utc": now.isoformat(),
         "finished_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
-        "symbols_total": len(symbols),
+        "symbols_total": symbols_total,
         "symbols_succeeded": success_count,
         "symbols_failed": len(failed),
         "rows_written": total_rows,
+        "master_rows_total": len(master_rows),
+        "master_rows_failed": len(master_failures),
+        "master_failures": master_failures[:100],
         "days_requested": args.days,
         "yahoo_range": args.range_value,
         "start_date": args.start_date,
@@ -279,8 +386,9 @@ def main() -> int:
         "delay_sec": delay_sec,
         "elapsed_sec": elapsed,
         "files": {
-            "prices_csv": str(csv_path),
-            "failed_symbols": str(failed_path),
+            "prices_csv": csv_path,
+            "failed_symbols": failed_path,
+            "embedded_master_ts": master_output_path,
             "run_report": str(report_path),
         },
     }
@@ -289,7 +397,9 @@ def main() -> int:
     print(f"Done: success={success_count}, failed={len(failed)}, rows={total_rows}, elapsed={elapsed:.1f}s")
     print(f"Report: {report_path}")
 
-    return 0 if success_count > 0 else 1
+    if args.symbols_file:
+        return 0 if success_count > 0 else 1
+    return 0 if master_rows else 1
 
 
 if __name__ == "__main__":
