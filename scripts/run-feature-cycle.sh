@@ -2,6 +2,25 @@
 set -euo pipefail
 
 MAX_TASKS="${MAX_TASKS:-10}"
+EXTRA_INSTRUCTION="${EXTRA_INSTRUCTION:-}"
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --instruction)
+      EXTRA_INSTRUCTION="${2:-}"
+      shift 2
+      ;;
+    --max-tasks)
+      MAX_TASKS="${2:-$MAX_TASKS}"
+      shift 2
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      echo "Usage: $0 [--max-tasks N] [--instruction \"text\"]" >&2
+      exit 2
+      ;;
+  esac
+done
 
 mkdir -p docs/management docs/results
 
@@ -63,7 +82,11 @@ for i in $(seq 1 "$MAX_TASKS"); do
     exit 0
   fi
 
-  ./scripts/run-one-task.sh
+  if [ -n "$EXTRA_INSTRUCTION" ]; then
+    ./scripts/run-one-task.sh --instruction "$EXTRA_INSTRUCTION"
+  else
+    ./scripts/run-one-task.sh
+  fi
 
   if [ -f docs/management/STOP_REQUIRED.md ]; then
     echo "STOP_REQUIRED.md created. Stop."

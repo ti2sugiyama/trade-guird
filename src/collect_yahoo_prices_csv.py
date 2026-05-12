@@ -22,6 +22,13 @@ from typing import List, Tuple
 YAHOO_CHART_URL = "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
 
 
+def parse_ymd_date(value: str, name: str) -> dt.date:
+    try:
+        return dt.date.fromisoformat(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"{name} must be YYYY-MM-DD: {value}") from exc
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Collect Yahoo daily prices to CSV")
     parser.add_argument("--symbols-file", required=True, help="Text file: one symbol per line")
@@ -32,6 +39,16 @@ def parse_args() -> argparse.Namespace:
         dest="range_value",
         default="3mo",
         help="Yahoo range parameter (default: 3mo)",
+    )
+    parser.add_argument(
+        "--start-date",
+        default="",
+        help="Start date (inclusive) in YYYY-MM-DD. When set, fetch by date window instead of --range.",
+    )
+    parser.add_argument(
+        "--end-date",
+        default="",
+        help="End date (inclusive) in YYYY-MM-DD. Requires --start-date.",
     )
     parser.add_argument("--interval", default="1d", help="Yahoo interval parameter (default: 1d)")
     parser.add_argument(
@@ -65,7 +82,21 @@ def parse_args() -> argparse.Namespace:
         help="Suffix appended when symbol has no dot, e.g. .T",
     )
     parser.add_argument("--seed", type=int, default=42, help="Random seed for retry jitter")
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    if args.end_date and not args.start_date:
+        parser.error("--end-date requires --start-date")
+
+    if args.start_date:
+        start_date = parse_ymd_date(args.start_date, "--start-date")
+        end_date = parse_ymd_date(args.end_date, "--end-date") if args.end_date else dt.date.today()
+        if end_date < start_date:
+            parser.error("--end-date must be same or later than --start-date")
+
+        args.start_date = start_date.isoformat()
+        args.end_date = end_date.isoformat()
+
+    return args
 
 
 def load_symbols(path: Path, suffix: str) -> List[str]:
@@ -85,17 +116,27 @@ def load_symbols(path: Path, suffix: str) -> List[str]:
 def fetch_symbol(
     symbol: str,
     range_value: str,
+    start_date: str,
+    end_date: str,
     interval: str,
     timeout_sec: float,
 ) -> List[Tuple[str, float, float, float, float, int]]:
-    params = urllib.parse.urlencode(
-        {
-            "range": range_value,
-            "interval": interval,
-            "includePrePost": "false",
-            "events": "div,splits",
-        }
-    )
+    query_params = {
+        "interval": interval,
+        "includePrePost": "false",
+        "events": "div,splits",
+    }
+
+    if start_date:
+        start_dt = dt.datetime.fromisoformat(start_date).replace(tzinfo=dt.timezone.utc)
+        end_dt = dt.datetime.fromisoformat(end_date).replace(tzinfo=dt.timezone.utc)
+        # Yahoo period2 is exclusive; +1 day to include end date in daily bars.
+        query_params["period1"] = str(int(start_dt.timestamp()))
+        query_params["period2"] = str(int((end_dt + dt.timedelta(days=1)).timestamp()))
+    else:
+        query_params["range"] = range_value
+
+    params = urllib.parse.urlencode(query_params)
     url = YAHOO_CHART_URL.format(symbol=urllib.parse.quote(symbol, safe="")) + f"?{params}"
     request = urllib.request.Request(
         url,
@@ -184,7 +225,14 @@ def main() -> int:
 
             for attempt in range(args.max_retries + 1):
                 try:
-                    rows = fetch_symbol(symbol, args.range_value, args.interval, args.timeout_sec)
+                    rows = fetch_symbol(
+                        symbol,
+                        args.range_value,
+                        args.start_date,
+                        args.end_date,
+                        args.interval,
+                        args.timeout_sec,
+                    )
                     if not rows:
                         raise RuntimeError("No rows returned")
                     break
@@ -224,6 +272,8 @@ def main() -> int:
         "rows_written": total_rows,
         "days_requested": args.days,
         "yahoo_range": args.range_value,
+        "start_date": args.start_date,
+        "end_date": args.end_date,
         "interval": args.interval,
         "window_hours": args.window_hours,
         "delay_sec": delay_sec,

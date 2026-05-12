@@ -3,6 +3,32 @@ set -euo pipefail
 
 mkdir -p docs/management docs/results
 
+EXTRA_INSTRUCTION="${EXTRA_INSTRUCTION:-}"
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --instruction)
+      EXTRA_INSTRUCTION="${2:-}"
+      shift 2
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      echo "Usage: $0 [--instruction \"text\"]" >&2
+      exit 2
+      ;;
+  esac
+done
+
+WORKER_EXTRA_BLOCK=""
+if [ -n "$EXTRA_INSTRUCTION" ]; then
+  WORKER_EXTRA_BLOCK="
+
+# 追加指示（Human）
+
+$EXTRA_INSTRUCTION
+"
+fi
+
 if [ -f docs/management/STOP_REQUIRED.md ]; then
   echo "STOP_REQUIRED.md exists. Please resolve it first."
   cat docs/management/STOP_REQUIRED.md
@@ -32,7 +58,7 @@ if [ -f docs/management/STOP_REQUIRED.md ]; then
 fi
 
 echo "=== Worker: implement current task ==="
-codex exec "$(cat prompts/worker.md)"
+codex exec "$(cat prompts/worker.md)${WORKER_EXTRA_BLOCK}"
 
 if [ -f docs/management/STOP_REQUIRED.md ]; then
   echo "Worker requested human confirmation."
