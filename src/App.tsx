@@ -1,9 +1,7 @@
 import { useMemo, useState } from 'react';
-import { embeddedMarketCsv, registeredTickers } from './data/embeddedMarketCsv';
+import { embeddedMarketCsv } from './data/embeddedMarketCsv';
 import { buildDiagnosisInputFromMarketCsv, evaluateDiagnosis } from './domain/diagnosis';
 import type {
-  DataManagementRow,
-  DataRowStatus,
   DiagnosisInput,
   DiagnosisInputSource,
   DiagnosisResult,
@@ -11,6 +9,30 @@ import type {
 import { loadHistory, saveHistoryItem } from './storage/historyStorage';
 
 type Screen = 'home' | 'diagnosis' | 'result' | 'history' | 'data-management';
+
+type FetchPreparation = {
+  targetLabel: string;
+  symbols: string[];
+  command: string;
+  status: string;
+};
+
+type DataRowStatus = 'ok' | 'insufficient' | 'failed';
+
+type DataManagementRow = {
+  symbol: string;
+  name: string;
+  status: DataRowStatus;
+  latestDate: string | null;
+  latestFetchedAtUtc: string | null;
+  staleDays: number | null;
+  missingDays: number;
+};
+
+const registeredTickers: Array<{ symbol: string; name: string }> = [
+  { symbol: '8035.T', name: '東京エレクトロン' },
+  { symbol: '7203.T', name: 'トヨタ自動車' },
+];
 
 const initialInput: DiagnosisInput = {
   tickerName: '',
@@ -55,20 +77,11 @@ function diffDays(fromIsoDate: string, to: Date): number {
 
 function buildDataRows(csvText: string, now: Date): DataManagementRow[] {
   const parsedRows = parseEmbeddedRows(csvText);
+  const knownTickerNames = new Map(registeredTickers.map((ticker) => [ticker.symbol, ticker.name] as const));
+  const symbols = [...new Set(parsedRows.map((row) => row.symbol))].sort((a, b) => a.localeCompare(b));
 
-  return registeredTickers.map((ticker) => {
-    const rows = parsedRows.filter((row) => row.symbol === ticker.symbol);
-    if (rows.length === 0) {
-      return {
-        symbol: ticker.symbol,
-        name: ticker.name,
-        status: 'failed',
-        latestDate: null,
-        latestFetchedAtUtc: null,
-        staleDays: null,
-        missingDays: REQUIRED_HISTORY_DAYS,
-      } satisfies DataManagementRow;
-    }
+  return symbols.map((symbol) => {
+    const rows = parsedRows.filter((row) => row.symbol === symbol);
 
     const uniqueDates = [...new Set(rows.map((row) => row.date))].sort((a, b) => a.localeCompare(b));
     const latestDate = uniqueDates[uniqueDates.length - 1];
@@ -83,8 +96,8 @@ function buildDataRows(csvText: string, now: Date): DataManagementRow[] {
     const status: DataRowStatus = missingDays > 0 || staleDays > 1 ? 'insufficient' : 'ok';
 
     return {
-      symbol: ticker.symbol,
-      name: ticker.name,
+      symbol,
+      name: knownTickerNames.get(symbol) ?? symbol,
       status,
       latestDate,
       latestFetchedAtUtc: latestFetchedAtUtcValue,
@@ -92,6 +105,53 @@ function buildDataRows(csvText: string, now: Date): DataManagementRow[] {
       missingDays,
     } satisfies DataManagementRow;
   });
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function calculateRequestedDays(rows: DataManagementRow[]): number {
+  if (rows.length === 0) {
+    return REQUIRED_HISTORY_DAYS;
+  }
+
+  const neededBySymbol = rows.map((row) => {
+    const stale = row.staleDays ?? 0;
+    const needed = Math.max(row.missingDays, stale) + 2;
+    return clamp(needed, 1, 60);
+  });
+  return Math.max(...neededBySymbol);
+}
+
+function buildRangeFromDays(days: number): string {
+  if (days <= 7) {
+    return '5d';
+  }
+  if (days <= 30) {
+    return '1mo';
+  }
+  if (days <= 90) {
+    return '3mo';
+  }
+  if (days <= 180) {
+    return '6mo';
+  }
+  return '1y';
+}
+
+function buildRefetchCommand(symbols: string[], requestedDays: number): string {
+  if (symbols.length === 0) {
+    return '対象銘柄がありません。';
+  }
+
+  const days = clamp(Math.trunc(requestedDays), 1, 60);
+  const range = buildRangeFromDays(days);
+
+  return [
+    `printf '%s\\n' ${symbols.join(' ')} > /tmp/refetch_symbols.txt`,
+    `python3 src/collect_yahoo_prices_csv.py --symbols-file /tmp/refetch_symbols.txt --out-dir ./tmp --range ${range} --days ${days}`,
+  ].join(' && ');
 }
 
 export default function App() {
@@ -105,6 +165,7 @@ export default function App() {
   const [queryFilter, setQueryFilter] = useState('');
   const [staleDaysFilter, setStaleDaysFilter] = useState(0);
   const [missingDaysFilter, setMissingDaysFilter] = useState(0);
+  const [fetchPreparation, setFetchPreparation] = useState<FetchPreparation | null>(null);
 
   const history = useMemo(() => loadHistory(), [historyVersion]);
   const dataRows = useMemo(() => buildDataRows(embeddedMarketCsv, new Date()), []);
@@ -159,21 +220,24 @@ export default function App() {
     };
   }, [dataRows]);
 
-  const insufficientSymbols = useMemo(
-    () => dataRows.filter((row) => row.status === 'insufficient').map((row) => row.symbol),
-    [dataRows],
-  );
+  const insufficientRows = useMemo(() => dataRows.filter((row) => row.status === 'insufficient'), [dataRows]);
+  const insufficientSymbols = useMemo(() => insufficientRows.map((row) => row.symbol), [insufficientRows]);
 
   const refetchCommand = useMemo(() => {
-    if (insufficientSymbols.length === 0) {
-      return '不足銘柄はありません。';
-    }
+    const days = calculateRequestedDays(insufficientRows);
+    return buildRefetchCommand(insufficientSymbols, days);
+  }, [insufficientRows, insufficientSymbols]);
 
-    return [
-      `printf '%s\\n' ${insufficientSymbols.join(' ')} > /tmp/refetch_symbols.txt`,
-      'python3 src/collect_yahoo_prices_csv.py --symbols-file /tmp/refetch_symbols.txt --out-dir ./tmp --days 60',
-    ].join(' && ');
-  }, [insufficientSymbols]);
+  function prepareFetch(targetLabel: string, rows: DataManagementRow[]) {
+    const symbols = rows.map((row) => row.symbol);
+    const days = calculateRequestedDays(rows);
+    setFetchPreparation({
+      targetLabel,
+      symbols,
+      command: buildRefetchCommand(symbols, days),
+      status: symbols.length > 0 ? '実行準備完了（未実行）' : '対象なしのため実行不可',
+    });
+  }
 
   function runDiagnosis() {
     setDiagnosisErrorMessage(null);
@@ -413,20 +477,51 @@ export default function App() {
                 <th>最新日</th>
                 <th>鮮度(日)</th>
                 <th>不足日数</th>
+                <th>操作</th>
               </tr>
             </thead>
             <tbody>
-              {filteredDataRows.map((row) => (
-                <tr key={row.symbol}>
-                  <td>{row.symbol} / {row.name}</td>
-                  <td>{row.status === 'ok' ? '正常' : row.status === 'insufficient' ? '不足' : '失敗'}</td>
-                  <td>{row.latestDate ?? '-'}</td>
-                  <td>{row.staleDays ?? '-'}</td>
-                  <td>{row.missingDays}</td>
+              {filteredDataRows.length === 0 ? (
+                <tr>
+                  <td colSpan={6}>表示対象がありません。フィルタ条件を見直してください。</td>
                 </tr>
-              ))}
+              ) : (
+                filteredDataRows.map((row) => (
+                  <tr key={row.symbol}>
+                    <td>{row.symbol} / {row.name}</td>
+                    <td>{row.status === 'ok' ? '正常' : row.status === 'insufficient' ? '不足' : '失敗'}</td>
+                    <td>{row.latestDate ?? '-'}</td>
+                    <td>{row.staleDays ?? '-'}</td>
+                    <td>{row.missingDays}</td>
+                    <td>
+                      <button type="button" onClick={() => prepareFetch(`銘柄: ${row.symbol}`, [row])}>
+                        データ取得
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
+
+          <div className="fetch-actions">
+            <button type="button" onClick={() => prepareFetch('不足銘柄一括', insufficientRows)}>
+              不足銘柄を一括取得
+            </button>
+          </div>
+
+          {fetchPreparation && (
+            <div className="fetch-preparation">
+              <h3>実行内容（準備）</h3>
+              <p>対象: {fetchPreparation.targetLabel}</p>
+              <p>銘柄: {fetchPreparation.symbols.length > 0 ? fetchPreparation.symbols.join(', ') : 'なし'}</p>
+              <p>状態: {fetchPreparation.status}</p>
+              <label>
+                実行コマンド
+                <textarea readOnly value={fetchPreparation.command} />
+              </label>
+            </div>
+          )}
 
           <label>
             不足銘柄向け再取得コマンド

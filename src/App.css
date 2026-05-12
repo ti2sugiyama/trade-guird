@@ -173,3 +173,23 @@ textarea {
   padding: 8px 6px;
   text-align: left;
 }
+
+.fetch-actions {
+  margin-bottom: 14px;
+}
+
+.fetch-preparation {
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+}
+
+.fetch-preparation h3 {
+  margin: 0 0 8px;
+}
+
+.fetch-preparation p {
+  margin: 0 0 6px;
+}
