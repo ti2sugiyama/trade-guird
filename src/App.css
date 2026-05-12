@@ -117,3 +117,59 @@ textarea {
   border-bottom: 1px solid #e5e7eb;
   padding-bottom: 12px;
 }
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.registered-tickers {
+  margin-bottom: 16px;
+}
+
+.registered-tickers h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.registered-tickers ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.summary-grid p {
+  margin: 0;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.filters select,
+.filters input {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 14px;
+}
+
+.data-table th,
+.data-table td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 8px 6px;
+  text-align: left;
+}
