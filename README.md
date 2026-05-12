@@ -88,13 +88,19 @@ codex --help
 ### 3. Feature単位で自動ループする
 
 ```bash
-./scripts/run-feature-cycle.sh
+./run-feature-cycle.sh
 ```
 
 追加指示をWorkerに渡す場合（例: 取得は日付レンジ限定を優先）:
 
 ```bash
-./scripts/run-feature-cycle.sh --max-tasks 3 --instruction "データ取得はstart/end日付指定を優先して実装する"
+./run-feature-cycle.sh --max-tasks 3 --instruction "データ取得はstart/end日付指定を優先して実装する"
+```
+
+銘柄マスタ取得（日本株）機能を追加したい場合の例:
+
+```bash
+./run-feature-cycle.sh --max-tasks 5 --instruction "日本株の銘柄マスタを公式データから取り込み、価格CSV未取得の銘柄もデータ管理一覧に表示できるようにする"
 ```
 
 Task単発で追加指示を渡す場合:
@@ -137,5 +143,5 @@ npm test
 慣れてから:
 
 ```bash
-./scripts/run-feature-cycle.sh
+./run-feature-cycle.sh
 ```

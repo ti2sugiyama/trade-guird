@@ -86,8 +86,12 @@ for i in $(seq 1 "$MAX_TASKS"); do
   fi
 
   if is_current_feature_done; then
-    echo "Current feature is already done. Stop."
-    exit 0
+    if [ -n "$EXTRA_INSTRUCTION" ]; then
+      echo "Current feature is already done. Continue because --instruction is provided."
+    else
+      echo "Current feature is already done. Stop."
+      exit 0
+    fi
   fi
 
   if [ -n "$EXTRA_INSTRUCTION" ]; then
