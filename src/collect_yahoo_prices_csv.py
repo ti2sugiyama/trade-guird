@@ -18,7 +18,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 YAHOO_CHART_URL = "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
 
@@ -36,7 +36,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--official-master-csv",
         default="",
-        help="Official JP master CSV input file (code/name columns required)",
+        help="Official JP master input file (CSV or Excel; code/name columns required)",
     )
     parser.add_argument(
         "--master-out-ts",
@@ -144,28 +144,53 @@ def pick_first(data: dict, keys: List[str]) -> str:
     return ""
 
 
-def load_official_master(path: Path, suffix: str) -> Tuple[List[Tuple[str, str]], List[dict]]:
-    rows: List[Tuple[str, str]] = []
-    failures: List[dict] = []
+def load_rows_from_official_master(path: Path) -> List[Dict[str, str]]:
+    ext = path.suffix.lower()
+    if ext in {".xlsx", ".xls", ".xlsm"}:
+        try:
+            import pandas as pd  # type: ignore
+        except ImportError as exc:
+            raise RuntimeError(
+                "Excel input requires pandas/openpyxl. "
+                "Install with: python3 -m pip install pandas openpyxl"
+            ) from exc
+        df = pd.read_excel(path, dtype=str)  # type: ignore[no-untyped-call]
+        if df.empty and len(df.columns) == 0:
+            return []
+        return [
+            {str(key): ("" if value is None else str(value)) for key, value in row.items()}
+            for row in df.to_dict(orient="records")
+        ]
+
     with path.open("r", newline="", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
         if not reader.fieldnames:
             raise RuntimeError("official master CSV has no header row")
-        for line_no, raw in enumerate(reader, start=2):
-            code = pick_first(raw, ["code", "symbol", "ticker", "銘柄コード", "コード"])
-            name = pick_first(raw, ["name", "ticker_name", "銘柄名", "銘柄名称", "名称"])
-            symbol = normalize_master_symbol(code, suffix)
-            if not symbol or not name:
-                failures.append(
-                    {
-                        "line": line_no,
-                        "code": code,
-                        "name": name,
-                        "reason": "missing code or name",
-                    }
-                )
-                continue
-            rows.append((symbol, name))
+        return [{key: ("" if value is None else str(value)) for key, value in row.items()} for row in reader]
+
+
+def load_official_master(path: Path, suffix: str) -> Tuple[List[Tuple[str, str]], List[dict]]:
+    raw_rows = load_rows_from_official_master(path)
+    if not raw_rows:
+        raise RuntimeError("official master input has no data rows")
+
+    rows: List[Tuple[str, str]] = []
+    failures: List[dict] = []
+    for line_no, raw in enumerate(raw_rows, start=2):
+        code = pick_first(raw, ["code", "symbol", "ticker", "銘柄コード", "コード"])
+        name = pick_first(raw, ["name", "ticker_name", "銘柄名", "銘柄名称", "名称"])
+        symbol = normalize_master_symbol(code, suffix)
+        if not symbol or not name:
+            failures.append(
+                {
+                    "line": line_no,
+                    "code": code,
+                    "name": name,
+                    "reason": "missing code or name",
+                }
+            )
+            continue
+        rows.append((symbol, name))
     unique = list(dict.fromkeys(rows))
     return unique, failures
 
