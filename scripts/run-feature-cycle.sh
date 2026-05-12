@@ -7,10 +7,18 @@ EXTRA_INSTRUCTION="${EXTRA_INSTRUCTION:-}"
 while [ $# -gt 0 ]; do
   case "$1" in
     --instruction)
+      if [ $# -lt 2 ]; then
+        echo "--instruction requires a value" >&2
+        exit 2
+      fi
       EXTRA_INSTRUCTION="${2:-}"
       shift 2
       ;;
     --max-tasks)
+      if [ $# -lt 2 ]; then
+        echo "--max-tasks requires a value" >&2
+        exit 2
+      fi
       MAX_TASKS="${2:-$MAX_TASKS}"
       shift 2
       ;;

@@ -91,6 +91,18 @@ codex --help
 ./scripts/run-feature-cycle.sh
 ```
 
+追加指示をWorkerに渡す場合（例: 取得は日付レンジ限定を優先）:
+
+```bash
+./scripts/run-feature-cycle.sh --max-tasks 3 --instruction "データ取得はstart/end日付指定を優先して実装する"
+```
+
+Task単発で追加指示を渡す場合:
+
+```bash
+./scripts/run-one-task.sh --instruction "データ取得はstart/end日付指定を優先して実装する"
+```
+
 `STOP_REQUIRED.md` が作成されたら人間確認が必要です。
 
 ```bash
